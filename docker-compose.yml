@@ -1,0 +1,39 @@
+# Infra local de desenvolvimento — Fase 0
+# Postgres com PostGIS (busca geoespacial por raio na descoberta pública) + Redis (fila BullMQ)
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: agendamento_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: agendamento
+      POSTGRES_PASSWORD: agendamento
+      POSTGRES_DB: agendamento
+    # Host 5433 para evitar conflito com outros Postgres locais (container usa 5432).
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U agendamento -d agendamento']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: agendamento_redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
+  redis_data:

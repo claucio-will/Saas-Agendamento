@@ -1,159 +1,103 @@
-# Turborepo starter
+# SaaS de Agendamento — Barbearias, Salões e Estúdios de Tatuagem
 
-This Turborepo starter is maintained by the Turborepo core team.
+Plataforma SaaS multi-tenant de agendamento e gestão para estabelecimentos de
+beleza e estética. Ver o produto completo em [`docs/PRD-saas-agendamento.md`](docs/PRD-saas-agendamento.md).
 
-## Using this example
+> **Status:** Fase 0 (Fundação Técnica) concluída. Próximo: Etapa 1.1 — Identidade e Tenants.
 
-Run the following command:
+## Stack
 
-```sh
-npx create-turbo@latest
+| Camada | Tecnologia |
+|---|---|
+| Frontend | Next.js (App Router) + TypeScript + Tailwind CSS v4 |
+| Backend | NestJS + TypeScript, arquitetura DDD |
+| Banco | PostgreSQL + PostGIS, RLS, ORM Prisma |
+| Compartilhado | `@repo/shared` (enums + DTOs Zod) |
+| Infra local | Docker Compose (Postgres + Redis) |
+
+## Estrutura do monorepo
+
+```
+apps/
+  backend/    # NestJS — API (bounded contexts DDD)
+  frontend/   # Next.js — web (design system + páginas)
+packages/
+  shared/         # @repo/shared — tipos, enums e schemas Zod
+  ui/             # componentes utilitários do turborepo
+  eslint-config/  # config ESLint compartilhada
+  typescript-config/
+docs/
+  PRD-saas-agendamento.md
+  adr/            # Architecture Decision Records
+docker-compose.yml
 ```
 
-## What's inside?
+## Pré-requisitos
 
-This Turborepo includes the following packages/apps:
+- Node.js ≥ 20 (testado com 24)
+- Docker + Docker Compose
+- npm 11
 
-### Apps and Packages
+## Setup (primeira vez)
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+```bash
+# 1. Instalar dependências
+npm install
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+# 2. Subir Postgres (PostGIS) + Redis. Postgres é exposto na porta 5433 do host.
+docker compose up -d
 
-### Utilities
+# 3. Configurar env do backend
+cp apps/backend/.env.example apps/backend/.env
 
-This Turborepo has some additional tools already setup for you:
+# 4. Gerar o Prisma Client e aplicar as migrações (cria tabelas, RLS e app_user)
+npm run db:generate --workspace backend
+npm run db:deploy   --workspace backend
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+# 5. (opcional) Popular dados de exemplo
+npm run db:seed --workspace backend
 ```
 
-Without global `turbo`, use your package manager:
+## Desenvolvimento
 
-```sh
-cd my-turborepo
-npx turbo build
-npm dlx turbo build
-npm exec turbo build
+```bash
+npm run dev        # sobe backend (:4000) e frontend (:3000) via turbo
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+- API: <http://localhost:4000/api> — health em `/api/health`.
+- Web: <http://localhost:3000> — vitrine do design system (light/dark).
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+## Scripts (raiz)
 
-```sh
-turbo build --filter=docs
-```
+| Comando | O quê |
+|---|---|
+| `npm run build` | Build de todos os pacotes/apps |
+| `npm run lint` | ESLint em todo o monorepo |
+| `npm run check-types` | `tsc --noEmit` em todos |
+| `npm test` | Testes unitários (sem banco) |
 
-Without global `turbo`:
+Backend (`--workspace backend`): `db:migrate`, `db:deploy`, `db:seed`,
+`db:studio`, `test:e2e` (teste de isolamento — **requer Postgres**).
 
-```sh
-npx turbo build --filter=docs
-npm exec turbo build --filter=docs
-npm exec turbo build --filter=docs
-```
+## Multi-tenancy (leitura obrigatória)
 
-### Develop
+O isolamento entre tenants é garantido por **Row-Level Security** no Postgres +
+um papel de aplicação não-privilegiado. Detalhes e o "porquê" em
+[`docs/adr/0002-multitenancy-rls.md`](docs/adr/0002-multitenancy-rls.md). Regra
+de ouro: **todo acesso a tabela de negócio passa por
+`PrismaService.runWithTenant(tenantId, ...)`** e o `tenantId` vem do JWT, nunca
+do cliente.
 
-To develop all apps and packages, run the following command:
+## Testes e CI
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+- `npm test` — unitários do domínio (rodam sem banco).
+- `npm run test:e2e --workspace backend` — **teste de isolamento cross-tenant**
+  contra Postgres real (requisito crítico do PRD).
+- CI (`.github/workflows/ci.yml`): sobe Postgres+Redis, roda build, lint,
+  type-check, migrações e o teste de isolamento a cada push/PR.
 
-```sh
-cd my-turborepo
-turbo dev
-```
+## Decisões de arquitetura (ADRs)
 
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-npm exec turbo dev
-npm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-npm exec turbo dev --filter=web
-npm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-npm exec turbo login
-npm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-npm exec turbo link
-npm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+- [0001 — Backend NestJS + DDD](docs/adr/0001-backend-nestjs-ddd.md)
+- [0002 — Multi-tenancy com RLS](docs/adr/0002-multitenancy-rls.md)
+- [0003 — Pacote de tipos compartilhado](docs/adr/0003-shared-types-package.md)

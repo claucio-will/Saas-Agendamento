@@ -1,0 +1,146 @@
+// Schema único do backend. Toda mudança via `prisma migrate dev` (nunca db push
+// fora de experimento local). Policies de RLS e extensões (PostGIS) vivem em
+// migrações SQL customizadas. Ver PRD 8.2 §4.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Runtime do app: conecta como papel NÃO-superusuário (RLS é aplicado).
+  url      = env("DATABASE_URL")
+  // Migrações (DDL, CREATE EXTENSION, policies, criação de papéis): papel
+  // privilegiado. Superusuário burla RLS, por isso o runtime nunca usa este.
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+/// Vertical do estabelecimento — extensível para novos tipos. Ver PRD 2.1.
+enum EstablishmentType {
+  BARBERSHOP
+  HAIR_SALON
+  TATTOO_STUDIO
+}
+
+/// Papéis de acesso (RBAC). Ver PRD 2.2.
+enum UserRole {
+  SUPER_ADMIN
+  TENANT_ADMIN
+  PROFESSIONAL
+  CUSTOMER
+}
+
+/// Ciclo de vida da assinatura do tenant. Ver PRD 2.13.
+enum TenantStatus {
+  TRIAL
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+}
+
+/// Registro do estabelecimento (tenant). Tabela raiz do multi-tenancy.
+/// Gerenciada pelo Super Admin / camada de aplicação — RLS de negócio recai
+/// nas tabelas que referenciam `tenant_id`.
+model Tenant {
+  id                String            @id @default(uuid()) @db.Uuid
+  name              String
+  slug              String            @unique
+  establishmentType EstablishmentType @map("establishment_type")
+  status            TenantStatus      @default(TRIAL)
+  documentId        String?           @map("document_id")
+  phone             String?
+  timezone          String            @default("America/Sao_Paulo")
+  // Endereço (geocodificação lat/lng entra na Etapa 1.3 — descoberta pública).
+  addressLine       String?           @map("address_line")
+  city              String?
+  state             String?
+  postalCode        String?           @map("postal_code")
+  latitude          Float?
+  longitude         Float?
+  // Config específica por vertical (extensível sem mudança de schema). Ver PRD 2.1.
+  settings          Json?
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+
+  exampleItems     ExampleItem[]
+  users            User[]
+  termsAcceptances TermsAcceptance[]
+
+  @@map("tenants")
+}
+
+/// Registro de aceite de Termos de Uso / contrato (versão, data/hora, IP).
+/// Requisito jurídico do onboarding. Ver PRD 2.13 / 3.4.
+model TermsAcceptance {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  tenantId     String?  @map("tenant_id") @db.Uuid
+  termsVersion String   @map("terms_version")
+  ipAddress    String?  @map("ip_address")
+  acceptedAt   DateTime @default(now()) @map("accepted_at")
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@map("terms_acceptances")
+}
+
+/// Identidade de usuário (plataforma). Tabela de IDENTIDADE, não de negócio:
+/// e-mail é único global e a autenticação precisa buscar por e-mail sem contexto
+/// de tenant — por isso NÃO leva RLS forçado (ver ADR 0004). O escopo por tenant
+/// dos usuários de staff é aplicado na camada de aplicação (filtro por tenantId).
+///
+/// - SUPER_ADMIN / CUSTOMER: `tenantId` nulo (identidade de plataforma).
+/// - TENANT_ADMIN / PROFESSIONAL: `tenantId` = estabelecimento ao qual pertencem.
+model User {
+  id            String    @id @default(uuid()) @db.Uuid
+  email         String    @unique
+  passwordHash  String?   @map("password_hash") // nulo quando só login social
+  name          String
+  phone         String?
+  role          UserRole
+  tenantId      String?   @map("tenant_id") @db.Uuid
+  googleId      String?   @unique @map("google_id")
+  emailVerified Boolean   @default(false) @map("email_verified")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  tenant           Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  refreshTokens    RefreshToken[]
+  termsAcceptances TermsAcceptance[]
+
+  @@index([tenantId])
+  @@map("users")
+}
+
+/// Sessão de refresh token (armazenado como hash) para permitir rotação e
+/// revogação. Ver PRD 3.4 (rotação de refresh token).
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+/// Tabela de negócio de exemplo (Fase 0). Prova o stack de isolamento:
+/// coluna `tenant_id` + RLS forçado no Postgres. Substituída por entidades
+/// reais (serviços, agendamentos) a partir da Etapa 1.2.
+model ExampleItem {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("example_items")
+}

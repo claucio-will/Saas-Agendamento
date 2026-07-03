@@ -1,0 +1,63 @@
+@import 'tailwindcss';
+
+/* Dark mode por classe `.dark` (toggle de 1 clique, persistido). Ver PRD 3.3. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design system — tokens semânticos. As utilidades do Tailwind (bg-background,
+ * text-foreground, bg-primary, text-accent, border-border...) referenciam as
+ * variáveis abaixo, então o dark mode troca os valores sem recompilar classes.
+ * Paleta elegante do PRD 3.3.
+ */
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --radius-btn: 0.625rem;
+
+  --font-sans:
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+/* Light mode (padrão) */
+:root {
+  --background: #fafaf7; /* off-white */
+  --surface: #ffffff;
+  --foreground: #1f2937; /* grafite */
+  --muted: #6b7280;
+  --border: #e5e1d8; /* neutro quente */
+  --primary: #1b4332; /* verde-escuro profundo */
+  --primary-foreground: #fafaf7;
+  --accent: #c9a227; /* dourado suave */
+  --accent-foreground: #1f2937;
+}
+
+/* Dark mode */
+.dark {
+  --background: #111827;
+  --surface: #1f2937;
+  --foreground: #f3f4f6;
+  --muted: #9ca3af;
+  --border: #374151;
+  --primary: #1b4332;
+  --primary-foreground: #fafaf7;
+  --accent: #c9a227;
+  --accent-foreground: #111827;
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+}
