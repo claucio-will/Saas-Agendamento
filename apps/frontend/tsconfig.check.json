@@ -1,0 +1,6 @@
+{
+  "//": "Type-check apenas do código-fonte. Exclui artefatos gerados pelo Next em .next/types (ex.: validator.ts), que só existem após o build e quebram o tsc isolado. O next build faz sua própria verificação de tipos das rotas.",
+  "extends": "./tsconfig.json",
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", ".next"]
+}
