@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   PricingType,
@@ -13,7 +12,6 @@ import {
   type UpdateServiceDto,
 } from '@repo/shared';
 import { useAuth } from '../../../lib/auth-context';
-import { ThemeToggle } from '../../../components/theme-toggle';
 import { Button } from '../../../components/ui/button';
 import { Card, CardTitle } from '../../../components/ui/card';
 import { Input } from '../../../components/ui/input';
@@ -144,20 +142,9 @@ export default function ServicosPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-6 px-4 py-8">
-      <header className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-accent">Painel do dono</p>
-          <h1 className="text-2xl font-bold text-foreground">Serviços</h1>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/painel"
-            className="text-sm text-muted hover:text-foreground"
-          >
-            Voltar
-          </Link>
-          <ThemeToggle />
-        </div>
+      <header>
+        <p className="text-sm font-medium text-accent">Painel do dono</p>
+        <h1 className="text-2xl font-bold text-foreground">Serviços</h1>
       </header>
 
       {error && <p className="text-sm text-red-500">{error}</p>}

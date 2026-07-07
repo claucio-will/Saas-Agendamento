@@ -16,6 +16,7 @@ export interface CreateTenantData {
 export interface TenantRepository {
   create(data: CreateTenantData): Promise<Tenant>;
   findAll(): Promise<Tenant[]>;
+  findById(id: string): Promise<Tenant | null>;
   findBySlug(slug: string): Promise<Tenant | null>;
   updateStatus(id: string, status: TenantStatus): Promise<Tenant | null>;
 }

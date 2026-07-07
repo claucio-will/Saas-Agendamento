@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { CreateTenantUseCase } from './application/create-tenant.usecase';
+import { GetMyTenantUseCase } from './application/get-my-tenant.usecase';
 import { ListTenantsUseCase } from './application/list-tenants.usecase';
 import { OnboardTenantUseCase } from './application/onboard-tenant.usecase';
 import { UpdateTenantStatusUseCase } from './application/update-tenant-status.usecase';
@@ -17,6 +18,7 @@ import { TenantController } from './interface/tenant.controller';
   controllers: [TenantController, OnboardingController],
   providers: [
     CreateTenantUseCase,
+    GetMyTenantUseCase,
     ListTenantsUseCase,
     OnboardTenantUseCase,
     UpdateTenantStatusUseCase,

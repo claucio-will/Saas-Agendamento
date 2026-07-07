@@ -4,12 +4,10 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/auth-context';
-import { ThemeToggle } from '../../components/theme-toggle';
-import { Button } from '../../components/ui/button';
 import { Card, CardDescription, CardTitle } from '../../components/ui/card';
 
 export default function PainelPage() {
-  const { user, loading, logout } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -29,26 +27,11 @@ export default function PainelPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-6 px-4 py-8">
-      <header className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-accent">Painel do dono</p>
-          <h1 className="text-2xl font-bold text-foreground">
-            Olá, {user.name.split(' ')[0]} 👋
-          </h1>
-        </div>
-        <div className="flex items-center gap-3">
-          <ThemeToggle />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={async () => {
-              await logout();
-              router.push('/');
-            }}
-          >
-            Sair
-          </Button>
-        </div>
+      <header>
+        <p className="text-sm font-medium text-accent">Painel do dono</p>
+        <h1 className="text-2xl font-bold text-foreground">
+          Olá, {user.name.split(' ')[0]} 👋
+        </h1>
       </header>
 
       <Card>

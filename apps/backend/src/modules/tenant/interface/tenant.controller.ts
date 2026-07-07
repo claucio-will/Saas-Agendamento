@@ -21,8 +21,10 @@ import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
 import { JwtAuthGuard } from '../../auth/interface/jwt-auth.guard';
 import { Roles } from '../../auth/interface/roles.decorator';
 import { RolesGuard } from '../../auth/interface/roles.guard';
+import { TenantId } from '../../auth/interface/tenant-id.decorator';
 import type { Tenant } from '../domain/tenant.entity';
 import { CreateTenantUseCase } from '../application/create-tenant.usecase';
+import { GetMyTenantUseCase } from '../application/get-my-tenant.usecase';
 import { ListTenantsUseCase } from '../application/list-tenants.usecase';
 import { UpdateTenantStatusUseCase } from '../application/update-tenant-status.usecase';
 
@@ -38,7 +40,15 @@ export class TenantController {
     private readonly createTenant: CreateTenantUseCase,
     private readonly listTenants: ListTenantsUseCase,
     private readonly updateTenantStatus: UpdateTenantStatusUseCase,
+    private readonly getMyTenant: GetMyTenantUseCase,
   ) {}
+
+  /** Estabelecimento do dono logado (para a navegação do painel). */
+  @Get('me')
+  @Roles(UserRole.TENANT_ADMIN)
+  async me(@TenantId() tenantId: string): Promise<TenantResponseDto> {
+    return this.toResponse(await this.getMyTenant.execute(tenantId));
+  }
 
   @Post()
   @HttpCode(201)

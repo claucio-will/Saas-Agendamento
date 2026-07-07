@@ -33,6 +33,11 @@ export class PrismaTenantRepository implements TenantRepository {
     return rows.map((row) => this.toDomain(row));
   }
 
+  async findById(id: string): Promise<Tenant | null> {
+    const row = await this.prisma.tenant.findUnique({ where: { id } });
+    return row ? this.toDomain(row) : null;
+  }
+
   async findBySlug(slug: string): Promise<Tenant | null> {
     const row = await this.prisma.tenant.findUnique({ where: { slug } });
     return row ? this.toDomain(row) : null;
