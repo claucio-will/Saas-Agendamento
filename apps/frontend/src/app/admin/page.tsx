@@ -6,62 +6,33 @@ import { useRouter } from 'next/navigation';
 import {
   TenantStatus,
   UserRole,
+  type PlatformOwnerDto,
   type TenantResponseDto,
-  type TenantStatus as TenantStatusType,
 } from '@repo/shared';
 import { useAuth } from '../../lib/auth-context';
-import { ThemeToggle } from '../../components/theme-toggle';
-import { Button } from '../../components/ui/button';
-import { Card, CardTitle } from '../../components/ui/card';
+import { Card, CardDescription, CardTitle } from '../../components/ui/card';
 
-const STATUS_LABEL: Record<TenantStatusType, string> = {
-  [TenantStatus.TRIAL]: 'Trial',
-  [TenantStatus.ACTIVE]: 'Ativo',
-  [TenantStatus.SUSPENDED]: 'Suspenso',
-  [TenantStatus.CANCELLED]: 'Cancelado',
-};
-
-const STATUS_COLOR: Record<TenantStatusType, string> = {
-  [TenantStatus.TRIAL]: 'bg-accent/20 text-accent',
-  [TenantStatus.ACTIVE]: 'bg-green-500/15 text-green-600',
-  [TenantStatus.SUSPENDED]: 'bg-red-500/15 text-red-500',
-  [TenantStatus.CANCELLED]: 'bg-muted/20 text-muted',
-};
-
-export default function AdminPage() {
+export default function AdminOverviewPage() {
   const { user, loading, authFetch } = useAuth();
   const router = useRouter();
   const [tenants, setTenants] = useState<TenantResponseDto[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [owners, setOwners] = useState<PlatformOwnerDto[] | null>(null);
 
   const load = useCallback(async () => {
-    try {
-      setTenants(await authFetch<TenantResponseDto[]>('/tenants'));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar.');
-    }
+    const [t, o] = await Promise.all([
+      authFetch<TenantResponseDto[]>('/tenants'),
+      authFetch<PlatformOwnerDto[]>('/platform/owners'),
+    ]);
+    setTenants(t);
+    setOwners(o);
   }, [authFetch]);
 
   useEffect(() => {
     if (loading) return;
-    if (!user) {
-      router.replace('/login');
-      return;
-    }
-    if (user.role !== UserRole.SUPER_ADMIN) {
-      router.replace('/');
-      return;
-    }
-    void load();
+    if (!user) return router.replace('/login');
+    if (user.role !== UserRole.SUPER_ADMIN) return router.replace('/');
+    void load().catch(() => undefined);
   }, [loading, user, router, load]);
-
-  async function changeStatus(id: string, status: TenantStatusType) {
-    await authFetch(`/tenants/${id}/status`, {
-      method: 'PATCH',
-      body: { status },
-    });
-    await load();
-  }
 
   if (loading || !user || user.role !== UserRole.SUPER_ADMIN) {
     return (
@@ -71,68 +42,141 @@ export default function AdminPage() {
     );
   }
 
+  const count = (s: TenantStatus) =>
+    tenants?.filter((t) => t.status === s).length ?? 0;
+
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-6 px-4 py-8">
-      <header className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-accent">Plataforma</p>
-          <h1 className="text-2xl font-bold text-foreground">Super Admin</h1>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link href="/" className="text-sm text-muted hover:text-foreground">
-            Início
-          </Link>
-          <ThemeToggle />
-        </div>
+    <main className="mx-auto flex min-h-screen max-w-4xl flex-col gap-6 px-4 py-8">
+      <header>
+        <p className="text-sm font-medium text-accent">Plataforma</p>
+        <h1 className="text-2xl font-bold text-foreground">Visão geral</h1>
       </header>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {/* Quem é quem — deixa a hierarquia do sistema explícita */}
+      <Card className="flex flex-col gap-4">
+        <div>
+          <CardTitle className="text-base">Como o sistema se organiza</CardTitle>
+          <CardDescription>
+            Você é o <strong className="text-foreground">Admin</strong> da
+            plataforma. Você gerencia todos os estabelecimentos e seus donos —
+            mas <strong className="text-foreground">não cria</strong>{' '}
+            estabelecimentos: os donos se cadastram sozinhos.
+          </CardDescription>
+        </div>
 
-      <div className="flex flex-col gap-3">
-        {tenants?.length === 0 && (
-          <p className="text-sm text-muted">Nenhum estabelecimento ainda.</p>
-        )}
-        {tenants?.map((t) => (
-          <Card key={t.id} className="flex flex-col gap-3">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <CardTitle className="text-base">{t.name}</CardTitle>
-                <p className="text-xs text-muted">
-                  /b/{t.slug} · {t.establishmentType}
-                </p>
-              </div>
-              <span
-                className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_COLOR[t.status]}`}
-              >
-                {STATUS_LABEL[t.status]}
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => changeStatus(t.id, TenantStatus.ACTIVE)}
-              >
-                Ativar
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => changeStatus(t.id, TenantStatus.SUSPENDED)}
-              >
-                Suspender
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => changeStatus(t.id, TenantStatus.CANCELLED)}
-              >
-                Cancelar
-              </Button>
-            </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+          <HierarchyStep
+            icon="⚙️"
+            title="Admin (você)"
+            desc="Gerencia a plataforma inteira"
+            highlight
+          />
+          <Arrow />
+          <HierarchyStep
+            icon="🏪"
+            title="Donos"
+            desc="Cada um administra 1 estabelecimento — os clientes da plataforma"
+          />
+          <Arrow />
+          <HierarchyStep
+            icon="🧑"
+            title="Clientes finais"
+            desc="Agendam nos estabelecimentos"
+          />
+        </div>
+      </Card>
+
+      {/* Números da plataforma */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Stat
+          label="Estabelecimentos"
+          value={tenants?.length}
+          hint={`${count(TenantStatus.ACTIVE)} ativos · ${count(TenantStatus.TRIAL)} em trial · ${count(TenantStatus.SUSPENDED)} suspensos`}
+        />
+        <Stat
+          label="Donos (clientes da plataforma)"
+          value={owners?.length}
+          hint="Responsáveis pelos estabelecimentos"
+        />
+      </div>
+
+      {/* Acessos rápidos */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Link href="/admin/estabelecimentos" className="group">
+          <Card className="h-full transition-colors group-hover:border-accent">
+            <CardTitle>Estabelecimentos →</CardTitle>
+            <CardDescription>
+              Ver todos e gerenciar o status (ativar, suspender, cancelar).
+            </CardDescription>
           </Card>
-        ))}
+        </Link>
+        <Link href="/admin/donos" className="group">
+          <Card className="h-full transition-colors group-hover:border-accent">
+            <CardTitle>Donos →</CardTitle>
+            <CardDescription>
+              Ver os donos e qual estabelecimento cada um administra.
+            </CardDescription>
+          </Card>
+        </Link>
       </div>
     </main>
+  );
+}
+
+function HierarchyStep({
+  icon,
+  title,
+  desc,
+  highlight,
+}: {
+  icon: string;
+  title: string;
+  desc: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      className={`flex-1 rounded-xl border p-3 ${
+        highlight ? 'border-accent bg-accent/10' : 'border-border bg-background'
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        <span aria-hidden>{icon}</span>
+        <span className="text-sm font-semibold text-foreground">{title}</span>
+      </div>
+      <p className="mt-1 text-xs text-muted">{desc}</p>
+    </div>
+  );
+}
+
+function Arrow() {
+  return (
+    <div
+      aria-hidden
+      className="flex items-center justify-center text-muted sm:px-1"
+    >
+      <span className="hidden sm:inline">→</span>
+      <span className="sm:hidden">↓</span>
+    </div>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: number | undefined;
+  hint: string;
+}) {
+  return (
+    <Card>
+      <p className="text-sm text-muted">{label}</p>
+      <p className="mt-1 text-3xl font-bold text-foreground">
+        {value ?? '—'}
+      </p>
+      <p className="mt-1 text-xs text-muted">{hint}</p>
+    </Card>
   );
 }

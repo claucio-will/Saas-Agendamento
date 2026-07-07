@@ -36,6 +36,7 @@ function makeUsers(user: User | null): UserRepository {
     findByEmail: jest.fn(async () => user),
     findById: jest.fn(async () => user),
     create: jest.fn(),
+    findOwners: jest.fn(async () => []),
   };
 }
 

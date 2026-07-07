@@ -36,3 +36,25 @@ export const tenantResponseSchema = z.object({
   createdAt: z.string().datetime(),
 });
 export type TenantResponseDto = z.infer<typeof tenantResponseSchema>;
+
+/**
+ * Dono de estabelecimento na visão do Super Admin — o "cliente" da plataforma,
+ * com o estabelecimento que ele administra. Ver PRD 2.4.
+ */
+export const platformOwnerResponseSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  email: z.string(),
+  phone: z.string().nullable(),
+  createdAt: z.string(),
+  tenant: z
+    .object({
+      id: z.string().uuid(),
+      name: z.string(),
+      slug: z.string(),
+      status: tenantStatusSchema,
+      establishmentType: establishmentTypeSchema,
+    })
+    .nullable(),
+});
+export type PlatformOwnerDto = z.infer<typeof platformOwnerResponseSchema>;

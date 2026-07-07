@@ -21,6 +21,7 @@ function makeRepo(overrides: Partial<TenantRepository> = {}): TenantRepository {
   return {
     create: jest.fn(async (data) => makeTenant(data.slug)),
     findAll: jest.fn(async () => []),
+    findById: jest.fn(async () => null),
     findBySlug: jest.fn(async () => null),
     updateStatus: jest.fn(async () => null),
     ...overrides,
