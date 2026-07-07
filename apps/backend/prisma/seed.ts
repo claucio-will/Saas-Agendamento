@@ -1,3 +1,4 @@
+import { hash } from '@node-rs/argon2';
 import { PrismaClient } from '@prisma/client';
 
 /**
@@ -40,9 +41,24 @@ async function main(): Promise<void> {
   await insertItemForTenant(barbearia.id, 'Item exemplo — Barbearia');
   await insertItemForTenant(estudio.id, 'Item exemplo — Estúdio');
 
+  // Super Admin da plataforma (dev). Troque a senha em produção.
+  const adminEmail = 'admin@plataforma.com';
+  await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: {},
+    create: {
+      email: adminEmail,
+      name: 'Super Admin',
+      role: 'SUPER_ADMIN',
+      emailVerified: true,
+      passwordHash: await hash('admin12345'),
+    },
+  });
+
   console.log('Seed concluído:', {
     barbearia: barbearia.slug,
     estudio: estudio.slug,
+    superAdmin: adminEmail,
   });
 }
 

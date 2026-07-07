@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { TenantStatus } from '@repo/shared';
 import type { Tenant as PrismaTenant } from '@prisma/client';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { Tenant } from '../domain/tenant.entity';
@@ -34,6 +35,13 @@ export class PrismaTenantRepository implements TenantRepository {
 
   async findBySlug(slug: string): Promise<Tenant | null> {
     const row = await this.prisma.tenant.findUnique({ where: { slug } });
+    return row ? this.toDomain(row) : null;
+  }
+
+  async updateStatus(id: string, status: TenantStatus): Promise<Tenant | null> {
+    const row = await this.prisma.tenant
+      .update({ where: { id }, data: { status } })
+      .catch(() => null);
     return row ? this.toDomain(row) : null;
   }
 

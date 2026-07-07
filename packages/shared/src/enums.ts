@@ -35,6 +35,19 @@ export const establishmentTypeSchema = z.enum([
   EstablishmentType.TATTOO_STUDIO,
 ]);
 
+/** Modelo de precificação do serviço. Ver PRD 2.1. */
+export const PricingType = {
+  FIXED: 'FIXED',
+  STARTING_AT: 'STARTING_AT',
+  QUOTE: 'QUOTE',
+} as const;
+export type PricingType = (typeof PricingType)[keyof typeof PricingType];
+export const pricingTypeSchema = z.enum([
+  PricingType.FIXED,
+  PricingType.STARTING_AT,
+  PricingType.QUOTE,
+]);
+
 /** Ciclo de vida da assinatura do tenant. Ver PRD 2.13. */
 export const TenantStatus = {
   TRIAL: 'TRIAL',

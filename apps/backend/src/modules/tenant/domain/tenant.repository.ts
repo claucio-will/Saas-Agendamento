@@ -1,4 +1,4 @@
-import type { EstablishmentType } from '@repo/shared';
+import type { EstablishmentType, TenantStatus } from '@repo/shared';
 import type { Tenant } from './tenant.entity';
 
 export interface CreateTenantData {
@@ -17,6 +17,7 @@ export interface TenantRepository {
   create(data: CreateTenantData): Promise<Tenant>;
   findAll(): Promise<Tenant[]>;
   findBySlug(slug: string): Promise<Tenant | null>;
+  updateStatus(id: string, status: TenantStatus): Promise<Tenant | null>;
 }
 
 /** Token de injeção do NestJS para a porta acima. */

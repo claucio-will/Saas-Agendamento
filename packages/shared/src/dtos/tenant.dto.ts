@@ -20,6 +20,12 @@ export const createTenantSchema = z.object({
 });
 export type CreateTenantDto = z.infer<typeof createTenantSchema>;
 
+/** Atualização de status do tenant pelo Super Admin (ativar/suspender/cancelar). */
+export const updateTenantStatusSchema = z.object({
+  status: tenantStatusSchema,
+});
+export type UpdateTenantStatusDto = z.infer<typeof updateTenantStatusSchema>;
+
 /** Representação de tenant retornada pela API. */
 export const tenantResponseSchema = z.object({
   id: z.string().uuid(),

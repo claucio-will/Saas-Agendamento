@@ -16,7 +16,7 @@ import type {
   OnboardingResponseDto,
   RegisterDto,
 } from '@repo/shared';
-import { apiFetch } from './api';
+import { apiFetch, ApiError } from './api';
 
 const ACCESS_KEY = 'agendamento-access';
 const REFRESH_KEY = 'agendamento-refresh';
@@ -28,6 +28,11 @@ interface AuthContextValue {
   register: (dto: RegisterDto) => Promise<void>;
   onboard: (dto: OnboardingDto) => Promise<OnboardingResponseDto>;
   logout: () => Promise<void>;
+  /** fetch autenticado com auto-refresh do access token em caso de 401. */
+  authFetch: <T>(
+    path: string,
+    opts?: { method?: string; body?: unknown },
+  ) => Promise<T>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -116,9 +121,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clear();
   }, [clear]);
 
+  const authFetch = useCallback(
+    async <T,>(
+      path: string,
+      opts: { method?: string; body?: unknown } = {},
+    ): Promise<T> => {
+      const token = readToken(ACCESS_KEY);
+      try {
+        return await apiFetch<T>(path, { ...opts, token });
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          const rt = readToken(REFRESH_KEY);
+          if (rt) {
+            try {
+              const res = await apiFetch<AuthResponseDto>('/auth/refresh', {
+                method: 'POST',
+                body: { refreshToken: rt },
+              });
+              persist(res);
+              return await apiFetch<T>(path, {
+                ...opts,
+                token: res.accessToken,
+              });
+            } catch {
+              clear();
+            }
+          }
+        }
+        throw err;
+      }
+    },
+    [persist, clear],
+  );
+
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, register, onboard, logout }}
+      value={{ user, loading, login, register, onboard, logout, authFetch }}
     >
       {children}
     </AuthContext.Provider>

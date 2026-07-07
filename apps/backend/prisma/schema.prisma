@@ -38,6 +38,22 @@ enum TenantStatus {
   CANCELLED
 }
 
+/// Modelo de precificação do serviço. Ver PRD 2.1.
+enum PricingType {
+  FIXED // preço fixo
+  STARTING_AT // "a partir de"
+  QUOTE // orçamento sob consulta (tatuagem)
+}
+
+/// Estados do agendamento. Ver PRD 2.9.
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
 /// Registro do estabelecimento (tenant). Tabela raiz do multi-tenancy.
 /// Gerenciada pelo Super Admin / camada de aplicação — RLS de negócio recai
 /// nas tabelas que referenciam `tenant_id`.
@@ -59,14 +75,158 @@ model Tenant {
   longitude         Float?
   // Config específica por vertical (extensível sem mudança de schema). Ver PRD 2.1.
   settings          Json?
+  // Regras de agendamento (PRD 2.5): antecedência e granularidade dos slots.
+  minAdvanceMinutes   Int             @default(60) @map("min_advance_minutes")
+  maxAdvanceDays      Int             @default(60) @map("max_advance_days")
+  slotIntervalMinutes Int             @default(15) @map("slot_interval_minutes")
   createdAt         DateTime          @default(now()) @map("created_at")
   updatedAt         DateTime          @updatedAt @map("updated_at")
 
   exampleItems     ExampleItem[]
   users            User[]
   termsAcceptances TermsAcceptance[]
+  services         Service[]
+  professionals    Professional[]
+  appointments     Appointment[]
 
   @@map("tenants")
+}
+
+/// Categoria de serviço — GLOBAL (gerenciada pela plataforma), sem tenant.
+/// Usada na home de descoberta (grade de ícones). Ver PRD 2.7.
+model ServiceCategory {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String    @unique
+  icon      String?
+  sortOrder Int       @default(0) @map("sort_order")
+  services  Service[]
+
+  @@map("service_categories")
+}
+
+/// Serviço oferecido por um estabelecimento. Ver PRD 2.5.
+model Service {
+  id              String      @id @default(uuid()) @db.Uuid
+  tenantId        String      @map("tenant_id") @db.Uuid
+  categoryId      String?     @map("category_id") @db.Uuid
+  name            String
+  description     String?
+  durationMinutes Int         @map("duration_minutes")
+  priceCents      Int         @map("price_cents")
+  pricingType     PricingType @default(FIXED) @map("pricing_type")
+  active          Boolean     @default(true)
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  tenant        Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category      ServiceCategory?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  professionals ServiceProfessional[]
+  appointments  Appointment[]
+
+  @@index([tenantId])
+  @@map("services")
+}
+
+/// Profissional/colaborador (barbeiro, cabeleireiro, tatuador). Ver PRD 2.5/2.6.
+/// `userId` liga a um login com papel PROFESSIONAL (opcional). Sem FK formal
+/// para users (identidade de plataforma) — apenas referência por id.
+model Professional {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  userId    String?  @map("user_id") @db.Uuid
+  name      String
+  bio       String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant       Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  services     ServiceProfessional[]
+  workingHours WorkingHours[]
+  timeBlocks   TimeBlock[]
+  appointments Appointment[]
+
+  @@index([tenantId])
+  @@map("professionals")
+}
+
+/// Quais profissionais executam quais serviços (N:N). Ver PRD 2.5.
+model ServiceProfessional {
+  serviceId      String @map("service_id") @db.Uuid
+  professionalId String @map("professional_id") @db.Uuid
+  tenantId       String @map("tenant_id") @db.Uuid
+
+  service      Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@id([serviceId, professionalId])
+  @@index([tenantId])
+  @@index([professionalId])
+  @@map("service_professionals")
+}
+
+/// Jornada de trabalho do profissional por dia da semana (0=domingo).
+/// Minutos desde 00:00 no fuso do tenant. Ver PRD 2.5.
+model WorkingHours {
+  id             String @id @default(uuid()) @db.Uuid
+  tenantId       String @map("tenant_id") @db.Uuid
+  professionalId String @map("professional_id") @db.Uuid
+  weekday        Int // 0-6 (domingo-sábado)
+  startMinute    Int    @map("start_minute")
+  endMinute      Int    @map("end_minute")
+
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([professionalId])
+  @@map("working_hours")
+}
+
+/// Bloqueio de agenda (folga, almoço, imprevisto). Ver PRD 2.5/2.6.
+model TimeBlock {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  professionalId String   @map("professional_id") @db.Uuid
+  startsAt       DateTime @map("starts_at")
+  endsAt         DateTime @map("ends_at")
+  reason         String?
+
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([professionalId, startsAt])
+  @@map("time_blocks")
+}
+
+/// Agendamento. Prevenção de overbooking por constraint de exclusão no Postgres
+/// (ver migração). `customerId` referencia users por id (sem FK formal). Ver PRD 2.9.
+model Appointment {
+  id             String            @id @default(uuid()) @db.Uuid
+  tenantId       String            @map("tenant_id") @db.Uuid
+  serviceId      String            @map("service_id") @db.Uuid
+  professionalId String            @map("professional_id") @db.Uuid
+  customerId     String?           @map("customer_id") @db.Uuid
+  customerName   String            @map("customer_name")
+  customerEmail  String            @map("customer_email")
+  customerPhone  String?           @map("customer_phone")
+  startsAt       DateTime          @map("starts_at")
+  endsAt         DateTime          @map("ends_at")
+  status         AppointmentStatus @default(PENDING)
+  priceCents     Int               @map("price_cents")
+  notes          String?
+  cancelReason   String?           @map("cancel_reason")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  service      Service      @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId])
+  @@index([professionalId, startsAt])
+  @@index([customerId])
+  @@map("appointments")
 }
 
 /// Registro de aceite de Termos de Uso / contrato (versão, data/hora, IP).

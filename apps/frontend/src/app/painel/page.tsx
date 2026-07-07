@@ -72,12 +72,14 @@ export default function PainelPage() {
             Sua agenda diária e por profissional. (Etapa 1.2)
           </CardDescription>
         </Card>
-        <Card className="opacity-70">
-          <CardTitle>Profissionais</CardTitle>
-          <CardDescription>
-            Equipe, jornadas e bloqueios. (Etapa 1.2)
-          </CardDescription>
-        </Card>
+        <Link href="/painel/profissionais" className="group">
+          <Card className="h-full transition-colors group-hover:border-accent">
+            <CardTitle>Profissionais</CardTitle>
+            <CardDescription>
+              Cadastre a equipe e defina as jornadas de trabalho.
+            </CardDescription>
+          </Card>
+        </Link>
         <Card className="opacity-70">
           <CardTitle>Clientes</CardTitle>
           <CardDescription>

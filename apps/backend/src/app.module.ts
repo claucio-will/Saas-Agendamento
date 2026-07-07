@@ -6,7 +6,9 @@ import { validateEnv } from './config/env';
 import { CommonModule } from './common/common.module';
 import { PrismaModule } from './infra/prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { CatalogModule } from './modules/catalog/catalog.module';
 import { HealthModule } from './modules/health/health.module';
+import { SchedulingModule } from './modules/scheduling/scheduling.module';
 import { TenantModule } from './modules/tenant/tenant.module';
 
 @Module({
@@ -36,6 +38,8 @@ import { TenantModule } from './modules/tenant/tenant.module';
     AuthModule,
     HealthModule,
     TenantModule,
+    CatalogModule,
+    SchedulingModule,
   ],
 })
 export class AppModule {}

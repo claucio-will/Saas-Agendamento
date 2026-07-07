@@ -37,7 +37,8 @@ import { RolesGuard } from './interface/roles.guard';
     { provide: PASSWORD_HASHER, useClass: ArgonPasswordHasher },
     { provide: TOKEN_SERVICE, useClass: JwtTokenService },
   ],
-  // Reutilizados pelo onboarding (Tenant Management) para criar o dono + tokens.
-  exports: [USER_REPOSITORY, PASSWORD_HASHER, TokenIssuer],
+  // Reutilizados por outros contextos: onboarding cria dono + tokens; o RBAC
+  // (RolesGuard) protege rotas de Super Admin/dono.
+  exports: [USER_REPOSITORY, PASSWORD_HASHER, TokenIssuer, RolesGuard],
 })
 export class AuthModule {}
