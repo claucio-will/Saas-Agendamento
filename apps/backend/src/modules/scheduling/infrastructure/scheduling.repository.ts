@@ -42,6 +42,17 @@ export interface BusyInterval {
   end: Date;
 }
 
+/** Cliente agregado do estabelecimento (a partir dos agendamentos). */
+export interface CustomerRow {
+  name: string;
+  email: string;
+  phone: string | null;
+  totalAppointments: number;
+  completedAppointments: number;
+  totalSpentCents: number;
+  lastVisit: Date;
+}
+
 export interface CreateAppointmentRow {
   serviceId: string;
   professionalId: string;
@@ -192,6 +203,50 @@ export class SchedulingRepository {
       }
       throw err;
     }
+  }
+
+  /** Clientes do estabelecimento, agregados a partir dos agendamentos. */
+  listCustomers(tenantId: string): Promise<CustomerRow[]> {
+    return this.prisma.runWithTenant(tenantId, async (tx) => {
+      // Ordena do mais recente ao mais antigo: a 1ª ocorrência de cada e-mail
+      // carrega o nome/telefone mais atuais e a última visita.
+      const appts = await tx.appointment.findMany({
+        orderBy: { startsAt: 'desc' },
+        select: {
+          customerName: true,
+          customerEmail: true,
+          customerPhone: true,
+          startsAt: true,
+          priceCents: true,
+          status: true,
+        },
+      });
+
+      const byEmail = new Map<string, CustomerRow>();
+      for (const a of appts) {
+        const key = a.customerEmail.toLowerCase();
+        let c = byEmail.get(key);
+        if (!c) {
+          c = {
+            name: a.customerName,
+            email: a.customerEmail,
+            phone: a.customerPhone,
+            totalAppointments: 0,
+            completedAppointments: 0,
+            totalSpentCents: 0,
+            lastVisit: a.startsAt,
+          };
+          byEmail.set(key, c);
+        }
+        c.totalAppointments += 1;
+        if (a.status === 'COMPLETED') {
+          c.completedAppointments += 1;
+          c.totalSpentCents += a.priceCents;
+        }
+        if (!c.phone && a.customerPhone) c.phone = a.customerPhone;
+      }
+      return [...byEmail.values()];
+    });
   }
 
   listAppointments(

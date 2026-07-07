@@ -67,12 +67,14 @@ export default function PainelPage() {
             </CardDescription>
           </Card>
         </Link>
-        <Card className="opacity-70">
-          <CardTitle>Clientes</CardTitle>
-          <CardDescription>
-            Histórico e contato dos clientes. (Etapa 1.2)
-          </CardDescription>
-        </Card>
+        <Link href="/painel/clientes" className="group">
+          <Card className="h-full transition-colors group-hover:border-accent">
+            <CardTitle>Clientes</CardTitle>
+            <CardDescription>
+              Histórico e contato de quem já agendou.
+            </CardDescription>
+          </Card>
+        </Link>
       </div>
 
       <p className="text-center text-sm text-muted">

@@ -6,12 +6,17 @@ import { BookingService } from './application/booking.service';
 import { PublicProfileService } from './application/public-profile.service';
 import { SchedulingRepository } from './infrastructure/scheduling.repository';
 import { AppointmentsController } from './interface/appointments.controller';
+import { CustomersController } from './interface/customers.controller';
 import { PublicSchedulingController } from './interface/public-scheduling.controller';
 
 /** Bounded context Scheduling (disponibilidade, agendamento, agenda). */
 @Module({
   imports: [AuthModule],
-  controllers: [PublicSchedulingController, AppointmentsController],
+  controllers: [
+    PublicSchedulingController,
+    AppointmentsController,
+    CustomersController,
+  ],
   providers: [
     SchedulingRepository,
     AvailabilityService,

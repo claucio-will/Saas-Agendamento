@@ -100,3 +100,17 @@ export const cancelAppointmentSchema = z.object({
   reason: z.string().max(300).optional(),
 });
 export type CancelAppointmentDto = z.infer<typeof cancelAppointmentSchema>;
+
+// ---------------------------------------------------------------------------
+// Clientes do estabelecimento (agregados dos agendamentos) — visão do dono
+// ---------------------------------------------------------------------------
+export const customerSummaryResponseSchema = z.object({
+  name: z.string(),
+  email: z.string(),
+  phone: z.string().nullable(),
+  totalAppointments: z.number().int(),
+  completedAppointments: z.number().int(),
+  totalSpentCents: z.number().int(),
+  lastVisit: z.string(), // ISO do último agendamento
+});
+export type CustomerSummaryDto = z.infer<typeof customerSummaryResponseSchema>;
