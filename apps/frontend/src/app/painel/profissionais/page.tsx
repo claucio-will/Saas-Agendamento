@@ -134,7 +134,7 @@ export default function ProfissionaisPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-6 px-4 py-8">
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-8">
       <header>
         <p className="text-sm font-medium text-accent">Painel do dono</p>
         <h1 className="text-2xl font-bold text-foreground">Profissionais</h1>
@@ -142,10 +142,11 @@ export default function ProfissionaisPage() {
 
       {error && <p className="text-sm text-red-500">{error}</p>}
 
-      {/* Novo profissional */}
-      <Card>
-        <CardTitle className="text-base">Adicionar profissional</CardTitle>
-        <form onSubmit={handleCreate} className="mt-3 flex flex-col gap-3">
+      <div className="grid gap-6 lg:grid-cols-[22rem_1fr] lg:items-start">
+        {/* Novo profissional */}
+        <Card className="lg:sticky lg:top-6">
+          <CardTitle className="text-base">Adicionar profissional</CardTitle>
+          <form onSubmit={handleCreate} className="mt-3 flex flex-col gap-3">
           <Input
             label="Nome"
             placeholder="Ex: João Silva"
@@ -173,23 +174,24 @@ export default function ProfissionaisPage() {
         </form>
       </Card>
 
-      {/* Lista */}
-      <div className="flex flex-col gap-3">
-        {professionals?.length === 0 && (
-          <p className="text-sm text-muted">
-            Nenhum profissional cadastrado ainda.
-          </p>
-        )}
-        {professionals?.map((p) => (
-          <ProfessionalCard
-            key={p.id}
-            professional={p}
-            onToggleActive={() => toggleActive(p)}
-            onSaved={load}
-            authFetch={authFetch}
-            onError={setError}
-          />
-        ))}
+        {/* Lista */}
+        <div className="flex flex-col gap-3">
+          {professionals?.length === 0 && (
+            <p className="text-sm text-muted">
+              Nenhum profissional cadastrado ainda.
+            </p>
+          )}
+          {professionals?.map((p) => (
+            <ProfessionalCard
+              key={p.id}
+              professional={p}
+              onToggleActive={() => toggleActive(p)}
+              onSaved={load}
+              authFetch={authFetch}
+              onError={setError}
+            />
+          ))}
+        </div>
       </div>
     </main>
   );

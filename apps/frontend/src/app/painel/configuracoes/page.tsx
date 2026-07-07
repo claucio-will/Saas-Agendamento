@@ -141,7 +141,7 @@ export default function ConfiguracoesPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-6 px-4 py-8">
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-8">
       <header>
         <p className="text-sm font-medium text-accent">Painel do dono</p>
         <h1 className="text-2xl font-bold text-foreground">Configurações</h1>

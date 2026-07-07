@@ -37,7 +37,7 @@ export default function DonosPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-4xl flex-col gap-6 px-4 py-8">
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-8">
       <header>
         <p className="text-sm font-medium text-accent">Plataforma</p>
         <h1 className="text-2xl font-bold text-foreground">Donos</h1>
@@ -49,7 +49,7 @@ export default function DonosPage() {
 
       {error && <p className="text-sm text-red-500">{error}</p>}
 
-      <div className="flex flex-col gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         {owners?.length === 0 && (
           <p className="text-sm text-muted">Nenhum dono cadastrado ainda.</p>
         )}
