@@ -5,10 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { registerSchema } from '@repo/shared';
 import { useAuth } from '../../lib/auth-context';
-import { ThemeToggle } from '../../components/theme-toggle';
+import { AuthShell } from '../../components/auth-shell';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { Card, CardDescription, CardTitle } from '../../components/ui/card';
 
 type FieldErrors = Partial<
   Record<'name' | 'email' | 'password' | 'phone', string>
@@ -62,74 +61,67 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-6 px-4 py-10">
-      <div className="flex items-center justify-between">
-        <Link href="/" className="text-sm text-muted hover:text-foreground">
-          ← Início
-        </Link>
-        <ThemeToggle />
-      </div>
+    <AuthShell
+      title="Criar conta"
+      subtitle="Cadastro rápido para agendar em qualquer estabelecimento."
+      footer={
+        <>
+          Já tem conta?{' '}
+          <Link
+            href="/login"
+            className="font-medium text-accent hover:underline"
+          >
+            Entrar
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+        <Input
+          label="Nome"
+          autoComplete="name"
+          value={form.name}
+          onChange={(e) => set('name', e.target.value)}
+          error={errors.name}
+          placeholder="Seu nome"
+        />
+        <Input
+          label="E-mail"
+          type="email"
+          autoComplete="email"
+          value={form.email}
+          onChange={(e) => set('email', e.target.value)}
+          error={errors.email}
+          placeholder="voce@exemplo.com"
+        />
+        <Input
+          label="Telefone (opcional)"
+          autoComplete="tel"
+          value={form.phone}
+          onChange={(e) => set('phone', e.target.value)}
+          error={errors.phone}
+          placeholder="(11) 90000-0000"
+        />
+        <Input
+          label="Senha"
+          type="password"
+          autoComplete="new-password"
+          value={form.password}
+          onChange={(e) => set('password', e.target.value)}
+          error={errors.password}
+          placeholder="mínimo 8 caracteres"
+        />
 
-      <Card>
-        <CardTitle>Criar conta</CardTitle>
-        <CardDescription>
-          Cadastro rápido para agendar em qualquer estabelecimento.
-        </CardDescription>
+        {formError && (
+          <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-500">
+            {formError}
+          </p>
+        )}
 
-        <form onSubmit={onSubmit} className="mt-5 flex flex-col gap-4" noValidate>
-          <Input
-            label="Nome"
-            autoComplete="name"
-            value={form.name}
-            onChange={(e) => set('name', e.target.value)}
-            error={errors.name}
-            placeholder="Seu nome"
-          />
-          <Input
-            label="E-mail"
-            type="email"
-            autoComplete="email"
-            value={form.email}
-            onChange={(e) => set('email', e.target.value)}
-            error={errors.email}
-            placeholder="voce@exemplo.com"
-          />
-          <Input
-            label="Telefone (opcional)"
-            autoComplete="tel"
-            value={form.phone}
-            onChange={(e) => set('phone', e.target.value)}
-            error={errors.phone}
-            placeholder="(11) 90000-0000"
-          />
-          <Input
-            label="Senha"
-            type="password"
-            autoComplete="new-password"
-            value={form.password}
-            onChange={(e) => set('password', e.target.value)}
-            error={errors.password}
-            placeholder="mínimo 8 caracteres"
-          />
-
-          {formError && (
-            <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-500">
-              {formError}
-            </p>
-          )}
-
-          <Button type="submit" size="lg" loading={loading}>
-            Criar conta
-          </Button>
-        </form>
-      </Card>
-
-      <p className="text-center text-sm text-muted">
-        Já tem conta?{' '}
-        <Link href="/login" className="font-medium text-accent hover:underline">
-          Entrar
-        </Link>
-      </p>
-    </main>
+        <Button type="submit" size="lg" loading={loading}>
+          Criar conta
+        </Button>
+      </form>
+    </AuthShell>
   );
 }

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { EstablishmentType } from '@repo/shared';
 import { AuthNav } from '../components/auth-nav';
-import { ThemeToggle } from '../components/theme-toggle';
+import { SettingsMenu } from '../components/settings-menu';
 import { Button } from '../components/ui/button';
 import { Card, CardTitle } from '../components/ui/card';
 import { ESTABLISHMENT_LABEL } from '../lib/labels';
@@ -19,7 +19,7 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-3">
           <AuthNav />
-          <ThemeToggle />
+          <SettingsMenu />
         </div>
       </header>
 

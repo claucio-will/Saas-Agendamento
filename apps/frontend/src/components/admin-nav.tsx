@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { UserRole } from '@repo/shared';
 import { useAuth } from '../lib/auth-context';
-import { ThemeToggle } from './theme-toggle';
+import { SettingsMenu } from './settings-menu';
 
 const LINKS = [
   { href: '/admin', label: 'Visão geral' },
@@ -60,7 +60,7 @@ export function AdminNav() {
           <span className="hidden rounded-full bg-accent/15 px-2.5 py-1 text-xs font-medium text-accent sm:inline">
             Super Admin
           </span>
-          <ThemeToggle />
+          <SettingsMenu />
           <button
             type="button"
             onClick={async () => {

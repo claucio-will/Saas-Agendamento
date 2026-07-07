@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { UserRole, type AuthUserDto } from '@repo/shared';
 import { useAuth } from '../../lib/auth-context';
-import { ThemeToggle } from '../../components/theme-toggle';
 import { Button } from '../../components/ui/button';
 import { Card, CardDescription, CardTitle } from '../../components/ui/card';
 
@@ -37,11 +36,10 @@ export default function ContaPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-6 px-4 py-10">
-      <div className="flex items-center justify-between">
+      <div>
         <Link href="/" className="text-sm text-muted hover:text-foreground">
           ← Início
         </Link>
-        <ThemeToggle />
       </div>
 
       <Card>

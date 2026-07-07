@@ -6,10 +6,9 @@ import { useRouter } from 'next/navigation';
 import { loginSchema } from '@repo/shared';
 import { useAuth } from '../../lib/auth-context';
 import { homePathForRole } from '../../lib/routes';
-import { ThemeToggle } from '../../components/theme-toggle';
+import { AuthShell } from '../../components/auth-shell';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { Card, CardDescription, CardTitle } from '../../components/ui/card';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -48,56 +47,51 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-6 px-4 py-10">
-      <div className="flex items-center justify-between">
-        <Link href="/" className="text-sm text-muted hover:text-foreground">
-          ← Início
-        </Link>
-        <ThemeToggle />
-      </div>
+    <AuthShell
+      title="Bem-vindo de volta"
+      subtitle="Entre para acessar sua conta."
+      footer={
+        <>
+          Não tem conta?{' '}
+          <Link
+            href="/register"
+            className="font-medium text-accent hover:underline"
+          >
+            Cadastre-se
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+        <Input
+          label="E-mail"
+          type="email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          error={errors.email}
+          placeholder="voce@exemplo.com"
+        />
+        <Input
+          label="Senha"
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          error={errors.password}
+          placeholder="••••••••"
+        />
 
-      <Card>
-        <CardTitle>Entrar</CardTitle>
-        <CardDescription>Acesse sua conta para agendar.</CardDescription>
+        {formError && (
+          <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-500">
+            {formError}
+          </p>
+        )}
 
-        <form onSubmit={onSubmit} className="mt-5 flex flex-col gap-4" noValidate>
-          <Input
-            label="E-mail"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            error={errors.email}
-            placeholder="voce@exemplo.com"
-          />
-          <Input
-            label="Senha"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            error={errors.password}
-            placeholder="••••••••"
-          />
-
-          {formError && (
-            <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-500">
-              {formError}
-            </p>
-          )}
-
-          <Button type="submit" size="lg" loading={loading}>
-            Entrar
-          </Button>
-        </form>
-      </Card>
-
-      <p className="text-center text-sm text-muted">
-        Não tem conta?{' '}
-        <Link href="/register" className="font-medium text-accent hover:underline">
-          Cadastre-se
-        </Link>
-      </p>
-    </main>
+        <Button type="submit" size="lg" loading={loading}>
+          Entrar
+        </Button>
+      </form>
+    </AuthShell>
   );
 }

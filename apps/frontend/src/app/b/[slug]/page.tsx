@@ -10,7 +10,6 @@ import {
   type PublicProfileResponseDto,
 } from '@repo/shared';
 import { apiFetch, ApiError } from '../../../lib/api';
-import { ThemeToggle } from '../../../components/theme-toggle';
 import { Button } from '../../../components/ui/button';
 import { Card, CardTitle } from '../../../components/ui/card';
 import { Input } from '../../../components/ui/input';
@@ -373,14 +372,11 @@ function Shell({
 }) {
   return (
     <main className="mx-auto flex min-h-screen max-w-xl flex-col gap-6 px-4 py-8">
-      <header className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-accent">Agendamento online</p>
-          {title && (
-            <h1 className="text-2xl font-bold text-foreground">{title}</h1>
-          )}
-        </div>
-        <ThemeToggle />
+      <header>
+        <p className="text-sm font-medium text-accent">Agendamento online</p>
+        {title && (
+          <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+        )}
       </header>
       {children}
     </main>

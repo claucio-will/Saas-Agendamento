@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { UserRole, type TenantResponseDto } from '@repo/shared';
 import { useAuth } from '../lib/auth-context';
-import { ThemeToggle } from './theme-toggle';
+import { SettingsMenu } from './settings-menu';
 
 const LINKS = [
   { href: '/painel', label: 'Início' },
@@ -80,7 +80,7 @@ export function PainelNav() {
               Ver página pública ↗
             </a>
           )}
-          <ThemeToggle />
+          <SettingsMenu />
           <button
             type="button"
             onClick={async () => {

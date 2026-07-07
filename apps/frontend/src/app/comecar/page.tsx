@@ -10,7 +10,6 @@ import {
 } from '@repo/shared';
 import { useAuth } from '../../lib/auth-context';
 import { slugify } from '../../lib/slugify';
-import { ThemeToggle } from '../../components/theme-toggle';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Card, CardDescription, CardTitle } from '../../components/ui/card';
@@ -132,11 +131,10 @@ export default function OnboardingPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-lg flex-col gap-6 px-4 py-8">
-      <div className="flex items-center justify-between">
+      <div>
         <Link href="/" className="text-sm text-muted hover:text-foreground">
           ← Início
         </Link>
-        <ThemeToggle />
       </div>
 
       <div>
