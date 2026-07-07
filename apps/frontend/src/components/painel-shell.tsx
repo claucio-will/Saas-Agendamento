@@ -4,14 +4,22 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { UserRole, type TenantResponseDto } from '@repo/shared';
 import { useAuth } from '../lib/auth-context';
 import { AppShell, type ShellLink } from './app-shell';
+import {
+  IconCalendar,
+  IconCog,
+  IconHome,
+  IconScissors,
+  IconUser,
+  IconUsers,
+} from './icons';
 
 const LINKS: ShellLink[] = [
-  { href: '/painel', label: 'Início', icon: '🏠' },
-  { href: '/painel/agenda', label: 'Agenda', icon: '📅' },
-  { href: '/painel/servicos', label: 'Serviços', icon: '✂️' },
-  { href: '/painel/profissionais', label: 'Profissionais', icon: '👥' },
-  { href: '/painel/clientes', label: 'Clientes', icon: '🧑' },
-  { href: '/painel/configuracoes', label: 'Configurações', icon: '⚙️' },
+  { href: '/painel', label: 'Início', icon: <IconHome /> },
+  { href: '/painel/agenda', label: 'Agenda', icon: <IconCalendar /> },
+  { href: '/painel/servicos', label: 'Serviços', icon: <IconScissors /> },
+  { href: '/painel/profissionais', label: 'Profissionais', icon: <IconUsers /> },
+  { href: '/painel/clientes', label: 'Clientes', icon: <IconUser /> },
+  { href: '/painel/configuracoes', label: 'Configurações', icon: <IconCog /> },
 ];
 
 /** Shell da área do dono: sidebar do estabelecimento + conteúdo. */

@@ -5,11 +5,12 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../lib/auth-context';
 import { SettingsMenu } from './settings-menu';
+import { IconGlobe, IconMenu } from './icons';
 
 export interface ShellLink {
   href: string;
   label: string;
-  icon: string;
+  icon: ReactNode;
 }
 
 interface AppShellProps {
@@ -84,9 +85,7 @@ export function AppShell({
                 : 'text-muted hover:bg-surface hover:text-foreground'
             }`}
           >
-            <span aria-hidden className="text-base">
-              {l.icon}
-            </span>
+            <span className="shrink-0 [&>svg]:h-5 [&>svg]:w-5">{l.icon}</span>
             {l.label}
           </Link>
         );
@@ -104,14 +103,12 @@ export function AppShell({
           onClick={onNavigate}
           className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:bg-surface hover:text-foreground"
         >
-          <span aria-hidden className="text-base">
-            🌐
-          </span>
+          <IconGlobe className="h-4 w-4 shrink-0" />
           Ver página pública ↗
         </a>
       )}
       <div className="flex items-center justify-between px-1">
-        <SettingsMenu up />
+        <SettingsMenu up align="left" />
         <button
           type="button"
           onClick={doLogout}
@@ -144,7 +141,7 @@ export function AppShell({
             aria-label="Abrir menu"
             className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-foreground hover:bg-surface"
           >
-            ☰
+            <IconMenu className="h-5 w-5" />
           </button>
           <span className="truncate text-sm font-semibold text-foreground">
             {brand.label}
