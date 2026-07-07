@@ -14,6 +14,7 @@ import {
   type AppointmentResponseDto,
   type AvailabilityResponseDto,
   type CreateAppointmentDto,
+  type PublicProfileResponseDto,
 } from '@repo/shared';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
 import {
@@ -23,6 +24,7 @@ import {
 import { OptionalJwtAuthGuard } from '../../auth/interface/optional-jwt-auth.guard';
 import { AvailabilityService } from '../application/availability.service';
 import { BookingService } from '../application/booking.service';
+import { PublicProfileService } from '../application/public-profile.service';
 
 /**
  * Rotas públicas do estabelecimento (por slug): ver disponibilidade e agendar.
@@ -33,7 +35,13 @@ export class PublicSchedulingController {
   constructor(
     private readonly availability: AvailabilityService,
     private readonly booking: BookingService,
+    private readonly profile: PublicProfileService,
   ) {}
+
+  @Get()
+  getProfile(@Param('slug') slug: string): Promise<PublicProfileResponseDto> {
+    return this.profile.getBySlug(slug);
+  }
 
   @Get('availability')
   getAvailability(

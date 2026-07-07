@@ -1,5 +1,34 @@
 import { z } from 'zod';
-import { appointmentStatusSchema } from '../enums.js';
+import {
+  appointmentStatusSchema,
+  establishmentTypeSchema,
+  pricingTypeSchema,
+} from '../enums.js';
+
+// ---------------------------------------------------------------------------
+// Perfil público do estabelecimento (por slug) — PRD 2.7/2.8
+// ---------------------------------------------------------------------------
+export const publicProfileResponseSchema = z.object({
+  name: z.string(),
+  slug: z.string(),
+  establishmentType: establishmentTypeSchema,
+  services: z.array(
+    z.object({
+      id: z.string().uuid(),
+      name: z.string(),
+      description: z.string().nullable(),
+      durationMinutes: z.number().int(),
+      priceCents: z.number().int(),
+      pricingType: pricingTypeSchema,
+      professionals: z.array(
+        z.object({ id: z.string().uuid(), name: z.string() }),
+      ),
+    }),
+  ),
+});
+export type PublicProfileResponseDto = z.infer<
+  typeof publicProfileResponseSchema
+>;
 
 // ---------------------------------------------------------------------------
 // Disponibilidade (PRD 2.9) — cálculo de slots livres

@@ -7,10 +7,22 @@ export interface TenantSchedulingInfo {
   slug: string;
   name: string;
   status: string;
+  establishmentType: string;
   timezone: string;
   minAdvanceMinutes: number;
   maxAdvanceDays: number;
   slotIntervalMinutes: number;
+}
+
+/** Serviço com seus profissionais, para o catálogo público (por slug). */
+export interface PublicServiceRow {
+  id: string;
+  name: string;
+  description: string | null;
+  durationMinutes: number;
+  priceCents: number;
+  pricingType: string;
+  professionals: { id: string; name: string }[];
 }
 
 export interface ServiceInfo {
@@ -57,6 +69,34 @@ export class SchedulingRepository {
   async getTenantById(id: string): Promise<TenantSchedulingInfo | null> {
     const t = await this.prisma.tenant.findUnique({ where: { id } });
     return t ? this.toTenantInfo(t) : null;
+  }
+
+  /** Serviços ativos + profissionais ativos, para a página pública. */
+  listPublicServices(tenantId: string): Promise<PublicServiceRow[]> {
+    return this.prisma.runWithTenant(tenantId, async (tx) => {
+      const rows = await tx.service.findMany({
+        where: { active: true },
+        orderBy: { createdAt: 'asc' },
+        include: {
+          professionals: {
+            include: {
+              professional: { select: { id: true, name: true, active: true } },
+            },
+          },
+        },
+      });
+      return rows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        description: r.description,
+        durationMinutes: r.durationMinutes,
+        priceCents: r.priceCents,
+        pricingType: r.pricingType,
+        professionals: r.professionals
+          .filter((l) => l.professional.active)
+          .map((l) => ({ id: l.professional.id, name: l.professional.name })),
+      }));
+    });
   }
 
   getService(tenantId: string, serviceId: string): Promise<ServiceInfo | null> {
@@ -248,6 +288,7 @@ export class SchedulingRepository {
     slug: string;
     name: string;
     status: string;
+    establishmentType: string;
     timezone: string;
     minAdvanceMinutes: number;
     maxAdvanceDays: number;
@@ -258,6 +299,7 @@ export class SchedulingRepository {
       slug: t.slug,
       name: t.name,
       status: t.status,
+      establishmentType: t.establishmentType,
       timezone: t.timezone,
       minAdvanceMinutes: t.minAdvanceMinutes,
       maxAdvanceDays: t.maxAdvanceDays,
