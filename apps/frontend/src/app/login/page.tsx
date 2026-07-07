@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { loginSchema } from '@repo/shared';
 import { useAuth } from '../../lib/auth-context';
+import { homePathForRole } from '../../lib/routes';
 import { ThemeToggle } from '../../components/theme-toggle';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -37,8 +38,8 @@ export default function LoginPage() {
     setErrors({});
     setLoading(true);
     try {
-      await login(parsed.data);
-      router.push('/conta');
+      const loggedUser = await login(parsed.data);
+      router.push(homePathForRole(loggedUser.role));
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Falha ao entrar.');
     } finally {

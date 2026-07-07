@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useAuth } from '../lib/auth-context';
+import { homePathForRole } from '../lib/routes';
 
 /** Navegação de autenticação no cabeçalho: login/cadastro ou usuário logado. */
 export function AuthNav() {
@@ -15,7 +16,7 @@ export function AuthNav() {
     const firstName = user.name.split(' ')[0];
     return (
       <Link
-        href="/conta"
+        href={homePathForRole(user.role)}
         className="inline-flex h-9 items-center gap-2 rounded-full border border-border bg-surface px-3 text-sm font-medium text-foreground hover:bg-background"
       >
         <span

@@ -24,7 +24,7 @@ const REFRESH_KEY = 'agendamento-refresh';
 interface AuthContextValue {
   user: AuthUserDto | null;
   loading: boolean;
-  login: (dto: LoginDto) => Promise<void>;
+  login: (dto: LoginDto) => Promise<AuthUserDto>;
   register: (dto: RegisterDto) => Promise<void>;
   onboard: (dto: OnboardingDto) => Promise<OnboardingResponseDto>;
   logout: () => Promise<void>;
@@ -81,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: dto,
       });
       persist(res);
+      return res.user;
     },
     [persist],
   );
