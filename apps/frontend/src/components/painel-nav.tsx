@@ -35,19 +35,21 @@ export function PainelNav() {
 
   return (
     <nav className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur">
-      <div className="mx-auto flex max-w-4xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
+      <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-3 px-4">
         {/* Marca / estabelecimento */}
-        <Link href="/painel" className="mr-2 flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
+        <Link href="/painel" className="flex shrink-0 items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
             {(tenant?.name ?? 'A').charAt(0).toUpperCase()}
           </span>
-          <span className="max-w-[10rem] truncate text-sm font-semibold text-foreground">
+          <span className="hidden max-w-[9rem] truncate text-sm font-semibold text-foreground md:inline">
             {tenant?.name ?? 'Meu estabelecimento'}
           </span>
         </Link>
 
-        {/* Links de seção */}
-        <div className="flex flex-1 flex-wrap items-center gap-1">
+        <span className="hidden h-6 w-px shrink-0 bg-border md:block" />
+
+        {/* Links de seção — linha única, rola se faltar espaço */}
+        <div className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto">
           {LINKS.map((link) => {
             const active =
               link.href === '/painel'
@@ -58,7 +60,7 @@ export function PainelNav() {
                 key={link.href}
                 href={link.href}
                 aria-current={active ? 'page' : undefined}
-                className={`rounded-[var(--radius-btn)] px-3 py-1.5 text-sm font-medium transition-colors ${
+                className={`whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors ${
                   active
                     ? 'bg-surface text-foreground'
                     : 'text-muted hover:bg-surface hover:text-foreground'
@@ -71,15 +73,15 @@ export function PainelNav() {
         </div>
 
         {/* Ações à direita */}
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1.5">
           {tenant && (
             <a
               href={`/b/${tenant.slug}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden rounded-[var(--radius-btn)] border border-border px-3 py-1.5 text-sm text-foreground hover:bg-surface sm:inline-flex"
+              className="hidden items-center rounded-md border border-border px-2.5 py-1.5 text-sm text-foreground hover:bg-surface lg:inline-flex"
             >
-              Ver página pública ↗
+              Ver página ↗
             </a>
           )}
           <SettingsMenu />
@@ -89,7 +91,7 @@ export function PainelNav() {
               await logout();
               router.push('/');
             }}
-            className="rounded-[var(--radius-btn)] px-3 py-1.5 text-sm font-medium text-muted hover:bg-surface hover:text-foreground"
+            className="rounded-md px-2.5 py-1.5 text-sm font-medium text-muted hover:bg-surface hover:text-foreground"
           >
             Sair
           </button>
