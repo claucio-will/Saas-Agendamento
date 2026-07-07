@@ -60,12 +60,14 @@ export default function PainelPage() {
       </Card>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Card className="opacity-70">
-          <CardTitle>Serviços</CardTitle>
-          <CardDescription>
-            Cadastre serviços, duração e preço. (Etapa 1.2)
-          </CardDescription>
-        </Card>
+        <Link href="/painel/servicos" className="group">
+          <Card className="h-full transition-colors group-hover:border-accent">
+            <CardTitle>Serviços</CardTitle>
+            <CardDescription>
+              Cadastre serviços, duração e preço.
+            </CardDescription>
+          </Card>
+        </Link>
         <Card className="opacity-70">
           <CardTitle>Agenda</CardTitle>
           <CardDescription>
