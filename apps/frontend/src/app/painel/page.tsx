@@ -68,12 +68,14 @@ export default function PainelPage() {
             </CardDescription>
           </Card>
         </Link>
-        <Card className="opacity-70">
-          <CardTitle>Agenda</CardTitle>
-          <CardDescription>
-            Sua agenda diária e por profissional. (Etapa 1.2)
-          </CardDescription>
-        </Card>
+        <Link href="/painel/agenda" className="group">
+          <Card className="h-full transition-colors group-hover:border-accent">
+            <CardTitle>Agenda</CardTitle>
+            <CardDescription>
+              Sua agenda diária e por profissional.
+            </CardDescription>
+          </Card>
+        </Link>
         <Link href="/painel/profissionais" className="group">
           <Card className="h-full transition-colors group-hover:border-accent">
             <CardTitle>Profissionais</CardTitle>
