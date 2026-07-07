@@ -12,7 +12,7 @@ const OPTIONS = [
  * Menu de ajustes (engrenagem) na barra superior. Concentra a preferência de
  * aparência (tema claro/escuro) num único lugar, em vez de um botão por tela.
  */
-export function SettingsMenu() {
+export function SettingsMenu({ up = false }: { up?: boolean }) {
   const { theme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
 
@@ -43,7 +43,9 @@ export function SettingsMenu() {
           />
           <div
             role="menu"
-            className="absolute right-0 z-40 mt-2 w-48 rounded-xl border border-border bg-surface p-2 shadow-lg"
+            className={`absolute right-0 z-40 w-48 rounded-xl border border-border bg-surface p-2 shadow-lg ${
+              up ? 'bottom-full mb-2' : 'mt-2'
+            }`}
           >
             <p className="px-2 py-1 text-xs font-medium uppercase tracking-wide text-muted">
               Aparência

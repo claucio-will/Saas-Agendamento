@@ -1,15 +1,10 @@
-import { AdminNav } from '../../components/admin-nav';
+import { AdminShell } from '../../components/admin-shell';
 
-/** Layout da área do Super Admin: navegação da plataforma + conteúdo. */
+/** Layout da área do Super Admin: app-shell com sidebar + conteúdo. */
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <div className="min-h-screen">
-      <AdminNav />
-      {children}
-    </div>
-  );
+  return <AdminShell>{children}</AdminShell>;
 }
