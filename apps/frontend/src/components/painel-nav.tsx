@@ -13,6 +13,7 @@ const LINKS = [
   { href: '/painel/servicos', label: 'Serviços' },
   { href: '/painel/profissionais', label: 'Profissionais' },
   { href: '/painel/clientes', label: 'Clientes' },
+  { href: '/painel/configuracoes', label: 'Configurações' },
 ];
 
 /** Barra de navegação da área do dono (todas as telas /painel/*). */

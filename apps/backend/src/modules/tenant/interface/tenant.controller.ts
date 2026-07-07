@@ -11,10 +11,13 @@ import {
 } from '@nestjs/common';
 import {
   createTenantSchema,
+  updateMyTenantSchema,
   updateTenantStatusSchema,
   UserRole,
   type CreateTenantDto,
+  type MyTenantResponseDto,
   type TenantResponseDto,
+  type UpdateMyTenantDto,
   type UpdateTenantStatusDto,
 } from '@repo/shared';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
@@ -23,9 +26,12 @@ import { Roles } from '../../auth/interface/roles.decorator';
 import { RolesGuard } from '../../auth/interface/roles.guard';
 import { TenantId } from '../../auth/interface/tenant-id.decorator';
 import type { Tenant } from '../domain/tenant.entity';
+import type { TenantSettings } from '../domain/tenant.repository';
 import { CreateTenantUseCase } from '../application/create-tenant.usecase';
 import { GetMyTenantUseCase } from '../application/get-my-tenant.usecase';
+import { GetMyTenantSettingsUseCase } from '../application/get-my-tenant-settings.usecase';
 import { ListTenantsUseCase } from '../application/list-tenants.usecase';
+import { UpdateMyTenantUseCase } from '../application/update-my-tenant.usecase';
 import { UpdateTenantStatusUseCase } from '../application/update-tenant-status.usecase';
 
 /**
@@ -41,6 +47,8 @@ export class TenantController {
     private readonly listTenants: ListTenantsUseCase,
     private readonly updateTenantStatus: UpdateTenantStatusUseCase,
     private readonly getMyTenant: GetMyTenantUseCase,
+    private readonly getMyTenantSettings: GetMyTenantSettingsUseCase,
+    private readonly updateMyTenant: UpdateMyTenantUseCase,
   ) {}
 
   /** Estabelecimento do dono logado (para a navegação do painel). */
@@ -48,6 +56,24 @@ export class TenantController {
   @Roles(UserRole.TENANT_ADMIN)
   async me(@TenantId() tenantId: string): Promise<TenantResponseDto> {
     return this.toResponse(await this.getMyTenant.execute(tenantId));
+  }
+
+  /** Configurações completas do estabelecimento (dono). */
+  @Get('me/settings')
+  @Roles(UserRole.TENANT_ADMIN)
+  async mySettings(
+    @TenantId() tenantId: string,
+  ): Promise<MyTenantResponseDto> {
+    return this.toMySettings(await this.getMyTenantSettings.execute(tenantId));
+  }
+
+  @Patch('me/settings')
+  @Roles(UserRole.TENANT_ADMIN)
+  async updateMySettings(
+    @TenantId() tenantId: string,
+    @Body(new ZodValidationPipe(updateMyTenantSchema)) dto: UpdateMyTenantDto,
+  ): Promise<MyTenantResponseDto> {
+    return this.toMySettings(await this.updateMyTenant.execute(tenantId, dto));
   }
 
   @Post()
@@ -71,6 +97,26 @@ export class TenantController {
     dto: UpdateTenantStatusDto,
   ): Promise<TenantResponseDto> {
     return this.toResponse(await this.updateTenantStatus.execute(id, dto.status));
+  }
+
+  private toMySettings(s: TenantSettings): MyTenantResponseDto {
+    return {
+      id: s.id,
+      name: s.name,
+      slug: s.slug,
+      establishmentType: s.establishmentType,
+      status: s.status,
+      documentId: s.documentId,
+      phone: s.phone,
+      timezone: s.timezone,
+      addressLine: s.addressLine,
+      city: s.city,
+      state: s.state,
+      postalCode: s.postalCode,
+      minAdvanceMinutes: s.minAdvanceMinutes,
+      maxAdvanceDays: s.maxAdvanceDays,
+      slotIntervalMinutes: s.slotIntervalMinutes,
+    };
   }
 
   private toResponse(tenant: Tenant): TenantResponseDto {

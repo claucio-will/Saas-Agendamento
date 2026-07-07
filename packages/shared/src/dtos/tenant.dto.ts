@@ -37,6 +37,42 @@ export const tenantResponseSchema = z.object({
 });
 export type TenantResponseDto = z.infer<typeof tenantResponseSchema>;
 
+/** Estabelecimento do dono logado, com dados editáveis (tela de configurações). */
+export const myTenantResponseSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  slug: z.string(),
+  establishmentType: establishmentTypeSchema,
+  status: tenantStatusSchema,
+  documentId: z.string().nullable(),
+  phone: z.string().nullable(),
+  timezone: z.string(),
+  addressLine: z.string().nullable(),
+  city: z.string().nullable(),
+  state: z.string().nullable(),
+  postalCode: z.string().nullable(),
+  // Regras de agendamento (PRD 2.5).
+  minAdvanceMinutes: z.number().int(),
+  maxAdvanceDays: z.number().int(),
+  slotIntervalMinutes: z.number().int(),
+});
+export type MyTenantResponseDto = z.infer<typeof myTenantResponseSchema>;
+
+/** Campos que o dono pode alterar do próprio estabelecimento. */
+export const updateMyTenantSchema = z.object({
+  name: z.string().min(2).max(120).optional(),
+  phone: z.string().min(8).max(20).nullable().optional(),
+  addressLine: z.string().max(160).nullable().optional(),
+  city: z.string().max(80).nullable().optional(),
+  state: z.string().max(40).nullable().optional(),
+  postalCode: z.string().max(12).nullable().optional(),
+  timezone: z.string().min(1).max(60).optional(),
+  minAdvanceMinutes: z.number().int().min(0).max(10080).optional(),
+  maxAdvanceDays: z.number().int().min(1).max(365).optional(),
+  slotIntervalMinutes: z.number().int().min(5).max(120).optional(),
+});
+export type UpdateMyTenantDto = z.infer<typeof updateMyTenantSchema>;
+
 /**
  * Dono de estabelecimento na visão do Super Admin — o "cliente" da plataforma,
  * com o estabelecimento que ele administra. Ver PRD 2.4.

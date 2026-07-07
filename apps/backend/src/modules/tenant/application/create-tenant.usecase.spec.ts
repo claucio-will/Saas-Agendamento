@@ -24,6 +24,8 @@ function makeRepo(overrides: Partial<TenantRepository> = {}): TenantRepository {
     findById: jest.fn(async () => null),
     findBySlug: jest.fn(async () => null),
     updateStatus: jest.fn(async () => null),
+    findSettingsById: jest.fn(async () => null),
+    updateSettings: jest.fn(async () => null),
     ...overrides,
   };
 }

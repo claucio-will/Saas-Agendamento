@@ -6,6 +6,8 @@ import { Tenant } from '../domain/tenant.entity';
 import type {
   CreateTenantData,
   TenantRepository,
+  TenantSettings,
+  UpdateTenantSettingsData,
 } from '../domain/tenant.repository';
 
 /** Adapter Prisma da porta TenantRepository. */
@@ -48,6 +50,41 @@ export class PrismaTenantRepository implements TenantRepository {
       .update({ where: { id }, data: { status } })
       .catch(() => null);
     return row ? this.toDomain(row) : null;
+  }
+
+  async findSettingsById(id: string): Promise<TenantSettings | null> {
+    const row = await this.prisma.tenant.findUnique({ where: { id } });
+    return row ? this.toSettings(row) : null;
+  }
+
+  async updateSettings(
+    id: string,
+    data: UpdateTenantSettingsData,
+  ): Promise<TenantSettings | null> {
+    const row = await this.prisma.tenant
+      .update({ where: { id }, data })
+      .catch(() => null);
+    return row ? this.toSettings(row) : null;
+  }
+
+  private toSettings(row: PrismaTenant): TenantSettings {
+    return {
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      establishmentType: row.establishmentType,
+      status: row.status,
+      documentId: row.documentId,
+      phone: row.phone,
+      timezone: row.timezone,
+      addressLine: row.addressLine,
+      city: row.city,
+      state: row.state,
+      postalCode: row.postalCode,
+      minAdvanceMinutes: row.minAdvanceMinutes,
+      maxAdvanceDays: row.maxAdvanceDays,
+      slotIntervalMinutes: row.slotIntervalMinutes,
+    };
   }
 
   private toDomain(row: PrismaTenant): Tenant {

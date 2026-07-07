@@ -9,6 +9,39 @@ export interface CreateTenantData {
   phone?: string;
 }
 
+/** Leitura completa do estabelecimento para a tela de configurações do dono. */
+export interface TenantSettings {
+  id: string;
+  name: string;
+  slug: string;
+  establishmentType: EstablishmentType;
+  status: TenantStatus;
+  documentId: string | null;
+  phone: string | null;
+  timezone: string;
+  addressLine: string | null;
+  city: string | null;
+  state: string | null;
+  postalCode: string | null;
+  minAdvanceMinutes: number;
+  maxAdvanceDays: number;
+  slotIntervalMinutes: number;
+}
+
+/** Campos alteráveis pelo dono (todos opcionais). */
+export interface UpdateTenantSettingsData {
+  name?: string;
+  phone?: string | null;
+  addressLine?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postalCode?: string | null;
+  timezone?: string;
+  minAdvanceMinutes?: number;
+  maxAdvanceDays?: number;
+  slotIntervalMinutes?: number;
+}
+
 /**
  * Porta (interface) do repositório de tenants. A implementação concreta vive na
  * camada de infraestrutura. Padrão port/adapter do DDD. Ver PRD 8.2 §3.
@@ -19,6 +52,12 @@ export interface TenantRepository {
   findById(id: string): Promise<Tenant | null>;
   findBySlug(slug: string): Promise<Tenant | null>;
   updateStatus(id: string, status: TenantStatus): Promise<Tenant | null>;
+  /** Configurações completas do estabelecimento (dono). */
+  findSettingsById(id: string): Promise<TenantSettings | null>;
+  updateSettings(
+    id: string,
+    data: UpdateTenantSettingsData,
+  ): Promise<TenantSettings | null>;
 }
 
 /** Token de injeção do NestJS para a porta acima. */

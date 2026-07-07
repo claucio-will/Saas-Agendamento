@@ -2,9 +2,11 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { CreateTenantUseCase } from './application/create-tenant.usecase';
 import { GetMyTenantUseCase } from './application/get-my-tenant.usecase';
+import { GetMyTenantSettingsUseCase } from './application/get-my-tenant-settings.usecase';
 import { ListPlatformOwnersUseCase } from './application/list-platform-owners.usecase';
 import { ListTenantsUseCase } from './application/list-tenants.usecase';
 import { OnboardTenantUseCase } from './application/onboard-tenant.usecase';
+import { UpdateMyTenantUseCase } from './application/update-my-tenant.usecase';
 import { UpdateTenantStatusUseCase } from './application/update-tenant-status.usecase';
 import { TENANT_REPOSITORY } from './domain/tenant.repository';
 import { TENANT_PROVISIONER } from './domain/tenant-provisioning';
@@ -21,9 +23,11 @@ import { TenantController } from './interface/tenant.controller';
   providers: [
     CreateTenantUseCase,
     GetMyTenantUseCase,
+    GetMyTenantSettingsUseCase,
     ListPlatformOwnersUseCase,
     ListTenantsUseCase,
     OnboardTenantUseCase,
+    UpdateMyTenantUseCase,
     UpdateTenantStatusUseCase,
     { provide: TENANT_REPOSITORY, useClass: PrismaTenantRepository },
     { provide: TENANT_PROVISIONER, useClass: PrismaTenantProvisioningService },
