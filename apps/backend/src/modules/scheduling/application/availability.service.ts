@@ -34,6 +34,7 @@ export class AvailabilityService {
     serviceId: string,
     date: string,
     professionalId?: string,
+    excludeAppointmentId?: string,
   ): Promise<AvailabilityResponseDto> {
     const service = await this.repo.getService(tenant.id, serviceId);
     if (!service) throw new NotFoundException('Serviço não encontrado.');
@@ -81,6 +82,7 @@ export class AvailabilityService {
         pro.id,
         dayStartUtc,
         dayEndUtc,
+        excludeAppointmentId,
       );
       const slots = computeAvailableSlots({
         workingIntervals,

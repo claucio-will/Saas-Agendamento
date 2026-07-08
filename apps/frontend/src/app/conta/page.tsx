@@ -8,12 +8,35 @@ import {
   UserRole,
   type AppointmentStatus as AppointmentStatusT,
   type AuthUserDto,
+  type AvailabilityResponseDto,
   type CustomerAppointmentDto,
 } from '@repo/shared';
+import { apiFetch } from '../../lib/api';
 import { useAuth } from '../../lib/auth-context';
 import { homePathForRole } from '../../lib/routes';
 import { Button } from '../../components/ui/button';
 import { Card, CardDescription, CardTitle } from '../../components/ui/card';
+import { Input } from '../../components/ui/input';
+
+type AuthFetch = <T>(
+  path: string,
+  opts?: { method?: string; body?: unknown },
+) => Promise<T>;
+
+const ACTIVE: AppointmentStatusT[] = [
+  AppointmentStatus.PENDING,
+  AppointmentStatus.CONFIRMED,
+];
+
+function todayStr(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+function hhmm(iso: string): string {
+  return new Date(iso).toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
 
 const ROLE_LABELS: Record<AuthUserDto['role'], string> = {
   [UserRole.SUPER_ADMIN]: 'Administrador da plataforma',
@@ -139,36 +162,12 @@ export default function ContaPage() {
           ) : (
             <div className="flex flex-col gap-3">
               {appointments.map((a) => (
-                <Card key={a.id} className="flex flex-col gap-1">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-medium text-foreground">
-                        {a.serviceName}
-                      </p>
-                      <p className="text-xs text-muted">
-                        <Link
-                          href={`/b/${a.establishmentSlug}`}
-                          className="hover:text-foreground"
-                        >
-                          {a.establishmentName}
-                        </Link>{' '}
-                        · {a.professionalName}
-                      </p>
-                    </div>
-                    <span
-                      className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_COLOR[a.status]}`}
-                    >
-                      {STATUS_LABEL[a.status]}
-                    </span>
-                  </div>
-                  <p className="text-sm text-foreground">
-                    {new Date(a.startsAt).toLocaleString('pt-BR', {
-                      dateStyle: 'short',
-                      timeStyle: 'short',
-                    })}{' '}
-                    · {formatBRL(a.priceCents)}
-                  </p>
-                </Card>
+                <AppointmentItem
+                  key={a.id}
+                  appointment={a}
+                  authFetch={authFetch}
+                  onChanged={loadAppointments}
+                />
               ))}
             </div>
           )}
@@ -208,5 +207,187 @@ export default function ContaPage() {
         </div>
       </Card>
     </main>
+  );
+}
+
+/** Item do histórico do cliente com ações de cancelar e remarcar. */
+function AppointmentItem({
+  appointment: a,
+  authFetch,
+  onChanged,
+}: {
+  appointment: CustomerAppointmentDto;
+  authFetch: AuthFetch;
+  onChanged: () => Promise<void>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [date, setDate] = useState(a.startsAt.slice(0, 10));
+  const [avail, setAvail] = useState<AvailabilityResponseDto | null>(null);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const active =
+    ACTIVE.includes(a.status) && new Date(a.startsAt).getTime() > Date.now();
+
+  const loadSlots = useCallback(
+    async (d: string) => {
+      setLoadingSlots(true);
+      setAvail(null);
+      try {
+        const q = new URLSearchParams({
+          serviceId: a.serviceId,
+          date: d,
+          professionalId: a.professionalId,
+        });
+        setAvail(
+          await apiFetch<AvailabilityResponseDto>(
+            `/public/${a.establishmentSlug}/availability?${q.toString()}`,
+          ),
+        );
+      } catch {
+        /* ignora */
+      } finally {
+        setLoadingSlots(false);
+      }
+    },
+    [a.serviceId, a.professionalId, a.establishmentSlug],
+  );
+
+  function openReschedule() {
+    setError(null);
+    setOpen(true);
+    const d = a.startsAt.slice(0, 10);
+    setDate(d);
+    void loadSlots(d);
+  }
+
+  async function cancel() {
+    if (!window.confirm('Cancelar este agendamento?')) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await authFetch(`/me/appointments/${a.id}/cancel`, { method: 'POST' });
+      await onChanged();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erro ao cancelar.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function pick(startsAt: string) {
+    setBusy(true);
+    setError(null);
+    try {
+      await authFetch(`/me/appointments/${a.id}/reschedule`, {
+        method: 'POST',
+        body: { startsAt },
+      });
+      setOpen(false);
+      await onChanged();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erro ao remarcar.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const proSlots = avail?.professionals.find(
+    (p) => p.professionalId === a.professionalId,
+  );
+
+  return (
+    <Card className="flex flex-col gap-2">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-medium text-foreground">{a.serviceName}</p>
+          <p className="text-xs text-muted">
+            <Link
+              href={`/b/${a.establishmentSlug}`}
+              className="hover:text-foreground"
+            >
+              {a.establishmentName}
+            </Link>{' '}
+            · {a.professionalName}
+          </p>
+        </div>
+        <span
+          className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_COLOR[a.status]}`}
+        >
+          {STATUS_LABEL[a.status]}
+        </span>
+      </div>
+      <p className="text-sm text-foreground">
+        {new Date(a.startsAt).toLocaleString('pt-BR', {
+          dateStyle: 'short',
+          timeStyle: 'short',
+        })}{' '}
+        · {formatBRL(a.priceCents)}
+      </p>
+
+      {error && <p className="text-sm text-red-500">{error}</p>}
+
+      {active && (
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={openReschedule}
+            disabled={busy}
+          >
+            {open ? 'Fechar' : 'Remarcar'}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-red-500"
+            onClick={cancel}
+            loading={busy}
+          >
+            Cancelar
+          </Button>
+        </div>
+      )}
+
+      {open && active && (
+        <div className="flex flex-col gap-2 border-t border-border pt-3">
+          <Input
+            label="Nova data"
+            type="date"
+            min={todayStr()}
+            value={date}
+            onChange={(e) => {
+              setDate(e.target.value);
+              void loadSlots(e.target.value);
+            }}
+            className="max-w-[12rem]"
+          />
+          {loadingSlots && (
+            <p className="text-sm text-muted">Buscando horários…</p>
+          )}
+          {!loadingSlots && proSlots && proSlots.slots.length === 0 && (
+            <p className="text-sm text-muted">
+              Nenhum horário livre nesta data.
+            </p>
+          )}
+          {!loadingSlots && proSlots && proSlots.slots.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {proSlots.slots.map((iso) => (
+                <button
+                  key={iso}
+                  type="button"
+                  disabled={busy}
+                  onClick={() => pick(iso)}
+                  className="rounded-[var(--radius-btn)] border border-border px-3 py-1.5 text-sm text-foreground transition-colors hover:border-accent disabled:opacity-50"
+                >
+                  {hhmm(iso)}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </Card>
   );
 }

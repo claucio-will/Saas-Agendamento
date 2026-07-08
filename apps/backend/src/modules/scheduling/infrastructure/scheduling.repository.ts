@@ -51,12 +51,24 @@ export interface CustomerAppointmentRow {
   id: string;
   establishmentName: string;
   establishmentSlug: string;
+  serviceId: string;
   serviceName: string;
+  professionalId: string;
   professionalName: string;
   startsAt: Date;
   endsAt: Date;
   status: AppointmentStatus;
   priceCents: number;
+}
+
+/** Agendamento do cliente (dados mínimos para validar cancel/remarcação). */
+export interface CustomerOwnedAppointment {
+  id: string;
+  tenantId: string;
+  serviceId: string;
+  professionalId: string;
+  startsAt: Date;
+  status: AppointmentStatus;
 }
 
 /** Avaliação (leitura) do estabelecimento. */
@@ -212,13 +224,35 @@ export class SchedulingRepository {
       id: r.id,
       establishmentName: tenantMap.get(r.tenantId)?.name ?? '',
       establishmentSlug: tenantMap.get(r.tenantId)?.slug ?? '',
+      serviceId: r.serviceId,
       serviceName: names.get(r.serviceId) ?? 'Serviço',
+      professionalId: r.professionalId,
       professionalName: names.get(r.professionalId) ?? 'Profissional',
       startsAt: r.startsAt,
       endsAt: r.endsAt,
       status: r.status,
       priceCents: r.priceCents,
     }));
+  }
+
+  /** Um agendamento do cliente (valida posse via RLS customer_self_read). */
+  getCustomerAppointment(
+    customerId: string,
+    appointmentId: string,
+  ): Promise<CustomerOwnedAppointment | null> {
+    return this.prisma.runAsCustomer(customerId, (tx) =>
+      tx.appointment.findFirst({
+        where: { id: appointmentId },
+        select: {
+          id: true,
+          tenantId: true,
+          serviceId: true,
+          professionalId: true,
+          startsAt: true,
+          status: true,
+        },
+      }),
+    );
   }
 
   // ---- Avaliações --------------------------------------------------------
@@ -348,6 +382,7 @@ export class SchedulingRepository {
     professionalId: string,
     from: Date,
     to: Date,
+    excludeAppointmentId?: string,
   ): Promise<BusyInterval[]> {
     return this.prisma.runWithTenant(tenantId, async (tx) => {
       const [appts, blocks] = await Promise.all([
@@ -357,6 +392,8 @@ export class SchedulingRepository {
             status: { notIn: ['CANCELLED', 'NO_SHOW'] },
             startsAt: { lt: to },
             endsAt: { gt: from },
+            // Ao remarcar, o próprio agendamento não bloqueia os slots.
+            ...(excludeAppointmentId ? { id: { not: excludeAppointmentId } } : {}),
           },
           select: { startsAt: true, endsAt: true },
         }),
