@@ -81,6 +81,17 @@ export class SchedulingRepository {
     return t ? this.toTenantInfo(t) : null;
   }
 
+  /** Estabelecimentos operacionais, para a descoberta pública (home). */
+  listPublicEstablishments(): Promise<
+    { name: string; slug: string; establishmentType: string; city: string | null }[]
+  > {
+    return this.prisma.tenant.findMany({
+      where: { status: { in: ['ACTIVE', 'TRIAL'] } },
+      orderBy: { name: 'asc' },
+      select: { name: true, slug: true, establishmentType: true, city: true },
+    });
+  }
+
   async getTenantById(id: string): Promise<TenantSchedulingInfo | null> {
     const t = await this.prisma.tenant.findUnique({ where: { id } });
     return t ? this.toTenantInfo(t) : null;

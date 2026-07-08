@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
   PricingType,
@@ -10,6 +11,7 @@ import {
   type PublicProfileResponseDto,
 } from '@repo/shared';
 import { apiFetch, ApiError } from '../../../lib/api';
+import { useAuth } from '../../../lib/auth-context';
 import { ESTABLISHMENT_LABEL } from '../../../lib/labels';
 import { IconMapPin, IconPhone } from '../../../components/icons';
 import { Button } from '../../../components/ui/button';
@@ -48,6 +50,7 @@ function today(): string {
 export default function PublicBookingPage() {
   const params = useParams<{ slug: string }>();
   const slug = params.slug;
+  const { user, authFetch } = useAuth();
 
   const [profile, setProfile] = useState<PublicProfileResponseDto | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -64,10 +67,7 @@ export default function PublicBookingPage() {
     startsAt: string;
   } | null>(null);
 
-  // Dados do cliente
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  // Confirmação
   const [booking, setBooking] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState<AppointmentResponseDto | null>(
@@ -118,21 +118,21 @@ export default function PublicBookingPage() {
     [availability],
   );
 
-  async function handleBook(e: React.FormEvent) {
-    e.preventDefault();
-    if (!service || !selected) return;
+  async function handleBook() {
+    if (!service || !selected || !user) return;
     setBooking(true);
     setFormError(null);
     try {
+      // Cliente logado: o backend usa a conta; enviamos nome/e-mail como
+      // fallback para outros perfis. Ver BookingService.resolveCustomer.
       const dto: CreateAppointmentDto = {
         serviceId: service.id,
         professionalId: selected.professionalId,
         startsAt: selected.startsAt,
-        customerName: name.trim(),
-        customerEmail: email.trim(),
-        ...(phone.trim() ? { customerPhone: phone.trim() } : {}),
+        customerName: user.name,
+        customerEmail: user.email,
       };
-      const appt = await apiFetch<AppointmentResponseDto>(
+      const appt = await authFetch<AppointmentResponseDto>(
         `/public/${slug}/appointments`,
         { method: 'POST', body: dto },
       );
@@ -199,9 +199,6 @@ export default function PublicBookingPage() {
               setConfirmed(null);
               setService(null);
               setSelected(null);
-              setName('');
-              setEmail('');
-              setPhone('');
             }}
           >
             Fazer outro agendamento
@@ -333,10 +330,10 @@ export default function PublicBookingPage() {
         </section>
       )}
 
-      {/* Passo 3 — dados do cliente */}
+      {/* Passo 3 — confirmação (exige conta) */}
       {selected && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-sm font-medium text-accent">3. Seus dados</h2>
+          <h2 className="text-sm font-medium text-accent">3. Confirmação</h2>
           <Card>
             <p className="mb-3 text-sm text-muted">
               {service?.name} · {selected.professionalName} ·{' '}
@@ -345,39 +342,44 @@ export default function PublicBookingPage() {
                 timeStyle: 'short',
               })}
             </p>
-            <form onSubmit={handleBook} className="flex flex-col gap-3">
-              <Input
-                label="Nome"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                minLength={2}
-                maxLength={120}
-              />
-              <Input
-                label="E-mail"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-              <Input
-                label="Telefone (opcional)"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                maxLength={20}
-              />
-              {formError && <p className="text-sm text-red-500">{formError}</p>}
-              <Button
-                type="submit"
-                loading={booking}
-                disabled={name.trim().length < 2 || !email.trim()}
-                className="self-start"
-              >
-                Confirmar agendamento
-              </Button>
-            </form>
+
+            {user ? (
+              <div className="flex flex-col gap-3">
+                <p className="text-sm text-muted">
+                  Agendando como{' '}
+                  <strong className="text-foreground">{user.name}</strong> (
+                  {user.email}).
+                </p>
+                {formError && (
+                  <p className="text-sm text-red-500">{formError}</p>
+                )}
+                <Button
+                  type="button"
+                  onClick={handleBook}
+                  loading={booking}
+                  className="self-start"
+                >
+                  Confirmar agendamento
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <p className="text-sm text-muted">
+                  Para confirmar o agendamento, entre ou crie sua conta — leva
+                  menos de um minuto e guarda seus dados.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Link href={`/login?next=/b/${slug}`}>
+                    <Button type="button">Entrar</Button>
+                  </Link>
+                  <Link href={`/register?next=/b/${slug}`}>
+                    <Button type="button" variant="outline">
+                      Criar conta
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
           </Card>
         </section>
       )}

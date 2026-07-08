@@ -6,6 +6,19 @@ import {
 } from '../enums.js';
 
 // ---------------------------------------------------------------------------
+// Descoberta pública de estabelecimentos (home) — PRD 2.7
+// ---------------------------------------------------------------------------
+export const publicEstablishmentResponseSchema = z.object({
+  name: z.string(),
+  slug: z.string(),
+  establishmentType: establishmentTypeSchema,
+  city: z.string().nullable(),
+});
+export type PublicEstablishmentDto = z.infer<
+  typeof publicEstablishmentResponseSchema
+>;
+
+// ---------------------------------------------------------------------------
 // Perfil público do estabelecimento (por slug) — PRD 2.7/2.8
 // ---------------------------------------------------------------------------
 export const publicProfileResponseSchema = z.object({

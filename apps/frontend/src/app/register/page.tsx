@@ -52,7 +52,8 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register(parsed.data);
-      router.push('/conta');
+      const next = new URLSearchParams(window.location.search).get('next');
+      router.push(next?.startsWith('/') ? next : '/conta');
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Falha ao cadastrar.');
     } finally {

@@ -38,7 +38,10 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const loggedUser = await login(parsed.data);
-      router.push(homePathForRole(loggedUser.role));
+      const next = new URLSearchParams(window.location.search).get('next');
+      router.push(
+        next?.startsWith('/') ? next : homePathForRole(loggedUser.role),
+      );
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Falha ao entrar.');
     } finally {

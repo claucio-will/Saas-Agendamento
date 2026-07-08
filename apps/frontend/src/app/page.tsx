@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { EstablishmentType } from '@repo/shared';
 import { AuthNav } from '../components/auth-nav';
 import { SettingsMenu } from '../components/settings-menu';
+import { EstablishmentDiscovery } from '../components/establishment-discovery';
 import { Button } from '../components/ui/button';
 import { Card, CardTitle } from '../components/ui/card';
 import { ESTABLISHMENT_LABEL } from '../lib/labels';
@@ -37,17 +38,20 @@ export default function Home() {
           equipe e horários num painel simples — sem WhatsApp bagunçado.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <Link href="/comecar">
-            <Button size="lg">Cadastrar meu estabelecimento</Button>
+          <Link href="#estabelecimentos">
+            <Button size="lg">Ver estabelecimentos</Button>
           </Link>
-          <Link href="/login">
+          <Link href="/comecar">
             <Button size="lg" variant="outline">
-              Entrar
+              Cadastrar meu estabelecimento
             </Button>
           </Link>
         </div>
         <p className="text-xs text-muted">14 dias grátis · sem cartão</p>
       </section>
+
+      {/* Descoberta de estabelecimentos */}
+      <EstablishmentDiscovery />
 
       {/* Dois públicos */}
       <section className="grid gap-4 sm:grid-cols-2">

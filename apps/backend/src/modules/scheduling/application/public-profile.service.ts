@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import type {
   EstablishmentType,
   PricingType,
+  PublicEstablishmentDto,
   PublicProfileResponseDto,
 } from '@repo/shared';
 import { SchedulingRepository } from '../infrastructure/scheduling.repository';
@@ -10,6 +11,17 @@ import { SchedulingRepository } from '../infrastructure/scheduling.repository';
 @Injectable()
 export class PublicProfileService {
   constructor(private readonly repo: SchedulingRepository) {}
+
+  /** Lista de estabelecimentos para a descoberta pública (home). */
+  async listEstablishments(): Promise<PublicEstablishmentDto[]> {
+    const rows = await this.repo.listPublicEstablishments();
+    return rows.map((r) => ({
+      name: r.name,
+      slug: r.slug,
+      establishmentType: r.establishmentType as EstablishmentType,
+      city: r.city,
+    }));
+  }
 
   async getBySlug(slug: string): Promise<PublicProfileResponseDto> {
     const tenant = await this.repo.getTenantBySlug(slug);
