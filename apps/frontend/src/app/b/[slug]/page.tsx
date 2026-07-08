@@ -10,6 +10,8 @@ import {
   type PublicProfileResponseDto,
 } from '@repo/shared';
 import { apiFetch, ApiError } from '../../../lib/api';
+import { ESTABLISHMENT_LABEL } from '../../../lib/labels';
+import { IconMapPin, IconPhone } from '../../../components/icons';
 import { Button } from '../../../components/ui/button';
 import { Card, CardTitle } from '../../../components/ui/card';
 import { Input } from '../../../components/ui/input';
@@ -211,6 +213,27 @@ export default function PublicBookingPage() {
 
   return (
     <Shell title={profile.name}>
+      {/* Informações do estabelecimento */}
+      <section className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-5">
+        <span className="w-fit rounded-full bg-accent/15 px-2.5 py-0.5 text-xs font-medium text-accent">
+          {ESTABLISHMENT_LABEL[profile.establishmentType]}
+        </span>
+        {(profile.addressLine || profile.city || profile.state) && (
+          <p className="flex items-center gap-2 text-sm text-muted">
+            <IconMapPin className="h-4 w-4 shrink-0" />
+            {[profile.addressLine, profile.city, profile.state]
+              .filter(Boolean)
+              .join(', ')}
+          </p>
+        )}
+        {profile.phone && (
+          <p className="flex items-center gap-2 text-sm text-muted">
+            <IconPhone className="h-4 w-4 shrink-0" />
+            {profile.phone}
+          </p>
+        )}
+      </section>
+
       {/* Passo 1 — escolher serviço */}
       <section className="flex flex-col gap-3">
         <h2 className="text-sm font-medium text-accent">1. Escolha o serviço</h2>

@@ -23,6 +23,10 @@ export class PublicProfileService {
       name: tenant.name,
       slug: tenant.slug,
       establishmentType: tenant.establishmentType as EstablishmentType,
+      phone: tenant.phone,
+      addressLine: tenant.addressLine,
+      city: tenant.city,
+      state: tenant.state,
       services: services.map((s) => ({
         id: s.id,
         name: s.name,

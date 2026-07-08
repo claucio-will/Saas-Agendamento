@@ -8,6 +8,10 @@ export interface TenantSchedulingInfo {
   name: string;
   status: string;
   establishmentType: string;
+  phone: string | null;
+  addressLine: string | null;
+  city: string | null;
+  state: string | null;
   timezone: string;
   minAdvanceMinutes: number;
   maxAdvanceDays: number;
@@ -344,6 +348,10 @@ export class SchedulingRepository {
     name: string;
     status: string;
     establishmentType: string;
+    phone: string | null;
+    addressLine: string | null;
+    city: string | null;
+    state: string | null;
     timezone: string;
     minAdvanceMinutes: number;
     maxAdvanceDays: number;
@@ -355,6 +363,10 @@ export class SchedulingRepository {
       name: t.name,
       status: t.status,
       establishmentType: t.establishmentType,
+      phone: t.phone,
+      addressLine: t.addressLine,
+      city: t.city,
+      state: t.state,
       timezone: t.timezone,
       minAdvanceMinutes: t.minAdvanceMinutes,
       maxAdvanceDays: t.maxAdvanceDays,
