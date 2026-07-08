@@ -13,7 +13,7 @@ import {
 import { apiFetch, ApiError } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth-context';
 import { ESTABLISHMENT_LABEL } from '../../../lib/labels';
-import { IconMapPin, IconPhone } from '../../../components/icons';
+import { IconArrowLeft, IconMapPin, IconPhone } from '../../../components/icons';
 import { Button } from '../../../components/ui/button';
 import { Card, CardTitle } from '../../../components/ui/card';
 import { Input } from '../../../components/ui/input';
@@ -231,6 +231,31 @@ export default function PublicBookingPage() {
         )}
       </section>
 
+      {/* Nossa equipe */}
+      {profile.professionals.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-sm font-medium text-accent">Nossa equipe</h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {profile.professionals.map((pro) => (
+              <div
+                key={pro.id}
+                className="flex items-start gap-3 rounded-2xl border border-border bg-surface p-4"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+                  {pro.name.charAt(0).toUpperCase()}
+                </span>
+                <div className="min-w-0">
+                  <p className="font-medium text-foreground">{pro.name}</p>
+                  {pro.bio && (
+                    <p className="text-xs text-muted">{pro.bio}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Passo 1 — escolher serviço */}
       <section className="flex flex-col gap-3">
         <h2 className="text-sm font-medium text-accent">1. Escolha o serviço</h2>
@@ -396,12 +421,29 @@ function Shell({
   children: React.ReactNode;
 }) {
   return (
-    <main className="mx-auto flex min-h-screen max-w-xl flex-col gap-6 px-4 py-8">
-      <header>
-        <p className="text-sm font-medium text-accent">Agendamento online</p>
+    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-6 px-4 py-6">
+      <Link
+        href="/"
+        className="flex w-fit items-center gap-1 text-sm text-muted transition-colors hover:text-foreground"
+      >
+        <IconArrowLeft className="h-4 w-4" />
+        Voltar
+      </Link>
+
+      <header className="flex items-center gap-3">
         {title && (
-          <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-lg font-bold text-primary-foreground">
+            {title.charAt(0).toUpperCase()}
+          </span>
         )}
+        <div>
+          <p className="text-sm font-medium text-accent">Agendamento online</p>
+          {title && (
+            <h1 className="text-2xl font-bold leading-tight text-foreground">
+              {title}
+            </h1>
+          )}
+        </div>
       </header>
       {children}
     </main>

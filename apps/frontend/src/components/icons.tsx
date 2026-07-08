@@ -133,6 +133,14 @@ export function IconMoon(p: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function IconArrowLeft(p: SVGProps<SVGSVGElement>) {
+  return (
+    <Svg {...p}>
+      <path d="M19 12H5M12 19l-7-7 7-7" />
+    </Svg>
+  );
+}
+
 export function IconMapPin(p: SVGProps<SVGSVGElement>) {
   return (
     <Svg {...p}>

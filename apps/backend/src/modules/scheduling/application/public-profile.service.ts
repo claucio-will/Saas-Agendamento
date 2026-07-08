@@ -30,7 +30,10 @@ export class PublicProfileService {
       throw new NotFoundException('Estabelecimento não encontrado.');
     }
 
-    const services = await this.repo.listPublicServices(tenant.id);
+    const [services, professionals] = await Promise.all([
+      this.repo.listPublicServices(tenant.id),
+      this.repo.listPublicProfessionals(tenant.id),
+    ]);
     return {
       name: tenant.name,
       slug: tenant.slug,
@@ -39,6 +42,7 @@ export class PublicProfileService {
       addressLine: tenant.addressLine,
       city: tenant.city,
       state: tenant.state,
+      professionals,
       services: services.map((s) => ({
         id: s.id,
         name: s.name,

@@ -29,6 +29,13 @@ export const publicProfileResponseSchema = z.object({
   addressLine: z.string().nullable(),
   city: z.string().nullable(),
   state: z.string().nullable(),
+  professionals: z.array(
+    z.object({
+      id: z.string().uuid(),
+      name: z.string(),
+      bio: z.string().nullable(),
+    }),
+  ),
   services: z.array(
     z.object({
       id: z.string().uuid(),

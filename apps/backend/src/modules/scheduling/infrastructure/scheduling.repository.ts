@@ -125,6 +125,19 @@ export class SchedulingRepository {
     });
   }
 
+  /** Profissionais ativos (com bio) para a seção "Nossa equipe" pública. */
+  listPublicProfessionals(
+    tenantId: string,
+  ): Promise<{ id: string; name: string; bio: string | null }[]> {
+    return this.prisma.runWithTenant(tenantId, (tx) =>
+      tx.professional.findMany({
+        where: { active: true },
+        orderBy: { createdAt: 'asc' },
+        select: { id: true, name: true, bio: true },
+      }),
+    );
+  }
+
   getService(tenantId: string, serviceId: string): Promise<ServiceInfo | null> {
     return this.prisma.runWithTenant(tenantId, async (tx) => {
       const s = await tx.service.findFirst({
