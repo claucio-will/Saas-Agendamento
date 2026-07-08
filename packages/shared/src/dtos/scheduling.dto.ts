@@ -29,6 +29,8 @@ export const publicProfileResponseSchema = z.object({
   addressLine: z.string().nullable(),
   city: z.string().nullable(),
   state: z.string().nullable(),
+  ratingAverage: z.number(),
+  ratingCount: z.number().int(),
   professionals: z.array(
     z.object({
       id: z.string().uuid(),
@@ -124,6 +126,31 @@ export const cancelAppointmentSchema = z.object({
   reason: z.string().max(300).optional(),
 });
 export type CancelAppointmentDto = z.infer<typeof cancelAppointmentSchema>;
+
+// ---------------------------------------------------------------------------
+// Avaliações do estabelecimento (PRD 2.11) — cliente que já foi atendido
+// ---------------------------------------------------------------------------
+export const createReviewSchema = z.object({
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().max(500).optional(),
+});
+export type CreateReviewDto = z.infer<typeof createReviewSchema>;
+
+export const reviewResponseSchema = z.object({
+  id: z.string().uuid(),
+  customerName: z.string(),
+  rating: z.number().int(),
+  comment: z.string().nullable(),
+  createdAt: z.string(),
+});
+export type ReviewResponseDto = z.infer<typeof reviewResponseSchema>;
+
+export const reviewsResponseSchema = z.object({
+  average: z.number(),
+  count: z.number().int(),
+  items: z.array(reviewResponseSchema),
+});
+export type ReviewsResponseDto = z.infer<typeof reviewsResponseSchema>;
 
 // ---------------------------------------------------------------------------
 // Clientes do estabelecimento (agregados dos agendamentos) — visão do dono

@@ -4,6 +4,7 @@ import { AppointmentsService } from './application/appointments.service';
 import { AvailabilityService } from './application/availability.service';
 import { BookingService } from './application/booking.service';
 import { PublicProfileService } from './application/public-profile.service';
+import { ReviewsService } from './application/reviews.service';
 import { SchedulingRepository } from './infrastructure/scheduling.repository';
 import { AppointmentsController } from './interface/appointments.controller';
 import { CustomersController } from './interface/customers.controller';
@@ -25,6 +26,7 @@ import { PublicSchedulingController } from './interface/public-scheduling.contro
     BookingService,
     AppointmentsService,
     PublicProfileService,
+    ReviewsService,
   ],
 })
 export class SchedulingModule {}

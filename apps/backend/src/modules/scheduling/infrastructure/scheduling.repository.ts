@@ -46,6 +46,15 @@ export interface BusyInterval {
   end: Date;
 }
 
+/** Avaliação (leitura) do estabelecimento. */
+export interface ReviewRow {
+  id: string;
+  customerName: string;
+  rating: number;
+  comment: string | null;
+  createdAt: Date;
+}
+
 /** Cliente agregado do estabelecimento (a partir dos agendamentos). */
 export interface CustomerRow {
   name: string;
@@ -134,6 +143,85 @@ export class SchedulingRepository {
         where: { active: true },
         orderBy: { createdAt: 'asc' },
         select: { id: true, name: true, bio: true },
+      }),
+    );
+  }
+
+  // ---- Avaliações --------------------------------------------------------
+
+  getRatingSummary(
+    tenantId: string,
+  ): Promise<{ average: number; count: number }> {
+    return this.prisma.runWithTenant(tenantId, async (tx) => {
+      const agg = await tx.review.aggregate({
+        _avg: { rating: true },
+        _count: true,
+      });
+      return { average: agg._avg.rating ?? 0, count: agg._count };
+    });
+  }
+
+  listReviews(tenantId: string): Promise<ReviewRow[]> {
+    return this.prisma.runWithTenant(tenantId, (tx) =>
+      tx.review.findMany({
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          customerName: true,
+          rating: true,
+          comment: true,
+          createdAt: true,
+        },
+      }),
+    );
+  }
+
+  /** Cliente pode avaliar apenas se já teve um agendamento concluído aqui. */
+  hasCompletedAppointment(
+    tenantId: string,
+    customerId: string,
+  ): Promise<boolean> {
+    return this.prisma.runWithTenant(tenantId, async (tx) => {
+      const count = await tx.appointment.count({
+        where: { customerId, status: 'COMPLETED' },
+      });
+      return count > 0;
+    });
+  }
+
+  upsertReview(
+    tenantId: string,
+    data: {
+      customerId: string;
+      customerName: string;
+      rating: number;
+      comment: string | null;
+    },
+  ): Promise<ReviewRow> {
+    return this.prisma.runWithTenant(tenantId, (tx) =>
+      tx.review.upsert({
+        where: {
+          tenantId_customerId: { tenantId, customerId: data.customerId },
+        },
+        create: {
+          tenantId,
+          customerId: data.customerId,
+          customerName: data.customerName,
+          rating: data.rating,
+          comment: data.comment,
+        },
+        update: {
+          rating: data.rating,
+          comment: data.comment,
+          customerName: data.customerName,
+        },
+        select: {
+          id: true,
+          customerName: true,
+          rating: true,
+          comment: true,
+          createdAt: true,
+        },
       }),
     );
   }

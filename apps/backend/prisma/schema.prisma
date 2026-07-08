@@ -88,6 +88,7 @@ model Tenant {
   services         Service[]
   professionals    Professional[]
   appointments     Appointment[]
+  reviews          Review[]
 
   @@map("tenants")
 }
@@ -303,4 +304,23 @@ model ExampleItem {
 
   @@index([tenantId])
   @@map("example_items")
+}
+
+/// Avaliação de um estabelecimento por um cliente que já foi atendido.
+/// Uma por cliente/estabelecimento (upsert). RLS por tenant. Ver PRD 2.11.
+model Review {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  customerId   String   @map("customer_id") @db.Uuid
+  customerName String   @map("customer_name")
+  rating       Int
+  comment      String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, customerId])
+  @@index([tenantId])
+  @@map("reviews")
 }

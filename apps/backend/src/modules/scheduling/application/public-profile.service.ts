@@ -30,9 +30,10 @@ export class PublicProfileService {
       throw new NotFoundException('Estabelecimento não encontrado.');
     }
 
-    const [services, professionals] = await Promise.all([
+    const [services, professionals, rating] = await Promise.all([
       this.repo.listPublicServices(tenant.id),
       this.repo.listPublicProfessionals(tenant.id),
+      this.repo.getRatingSummary(tenant.id),
     ]);
     return {
       name: tenant.name,
@@ -42,6 +43,8 @@ export class PublicProfileService {
       addressLine: tenant.addressLine,
       city: tenant.city,
       state: tenant.state,
+      ratingAverage: Math.round(rating.average * 10) / 10,
+      ratingCount: rating.count,
       professionals,
       services: services.map((s) => ({
         id: s.id,

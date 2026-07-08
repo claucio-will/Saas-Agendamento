@@ -5,15 +5,23 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
   PricingType,
+  UserRole,
   type AppointmentResponseDto,
   type AvailabilityResponseDto,
   type CreateAppointmentDto,
+  type CreateReviewDto,
   type PublicProfileResponseDto,
+  type ReviewsResponseDto,
 } from '@repo/shared';
 import { apiFetch, ApiError } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth-context';
 import { ESTABLISHMENT_LABEL } from '../../../lib/labels';
-import { IconArrowLeft, IconMapPin, IconPhone } from '../../../components/icons';
+import {
+  IconArrowLeft,
+  IconMapPin,
+  IconPhone,
+  IconStar,
+} from '../../../components/icons';
 import { Button } from '../../../components/ui/button';
 import { Card, CardTitle } from '../../../components/ui/card';
 import { Input } from '../../../components/ui/input';
@@ -74,6 +82,16 @@ export default function PublicBookingPage() {
     null,
   );
 
+  // Avaliações
+  const [reviews, setReviews] = useState<ReviewsResponseDto | null>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewMsg, setReviewMsg] = useState<{
+    ok: boolean;
+    text: string;
+  } | null>(null);
+
   // Carrega o perfil público do estabelecimento.
   useEffect(() => {
     apiFetch<PublicProfileResponseDto>(`/public/${slug}`)
@@ -86,6 +104,43 @@ export default function PublicBookingPage() {
         ),
       );
   }, [slug]);
+
+  const loadReviews = useCallback(async () => {
+    try {
+      setReviews(await apiFetch<ReviewsResponseDto>(`/public/${slug}/reviews`));
+    } catch {
+      /* avaliações são opcionais; ignora erro */
+    }
+  }, [slug]);
+
+  useEffect(() => {
+    void loadReviews();
+  }, [loadReviews]);
+
+  async function submitReview() {
+    setReviewSubmitting(true);
+    setReviewMsg(null);
+    try {
+      const dto: CreateReviewDto = {
+        rating: reviewRating,
+        ...(reviewComment.trim() ? { comment: reviewComment.trim() } : {}),
+      };
+      await authFetch(`/public/${slug}/reviews`, { method: 'POST', body: dto });
+      setReviewMsg({ ok: true, text: 'Avaliação enviada. Obrigado!' });
+      setReviewComment('');
+      await loadReviews();
+    } catch (err) {
+      setReviewMsg({
+        ok: false,
+        text:
+          err instanceof ApiError
+            ? err.message
+            : 'Não foi possível enviar a avaliação.',
+      });
+    } finally {
+      setReviewSubmitting(false);
+    }
+  }
 
   const loadSlots = useCallback(async () => {
     if (!service) return;
@@ -212,9 +267,20 @@ export default function PublicBookingPage() {
     <Shell title={profile.name}>
       {/* Informações do estabelecimento */}
       <section className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-5">
-        <span className="w-fit rounded-full bg-accent/15 px-2.5 py-0.5 text-xs font-medium text-accent">
-          {ESTABLISHMENT_LABEL[profile.establishmentType]}
-        </span>
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="w-fit rounded-full bg-accent/15 px-2.5 py-0.5 text-xs font-medium text-accent">
+            {ESTABLISHMENT_LABEL[profile.establishmentType]}
+          </span>
+          {profile.ratingCount > 0 && (
+            <span className="flex items-center gap-1.5 text-sm">
+              <Stars value={profile.ratingAverage} />
+              <span className="font-medium text-foreground">
+                {profile.ratingAverage.toFixed(1)}
+              </span>
+              <span className="text-muted">({profile.ratingCount})</span>
+            </span>
+          )}
+        </div>
         {(profile.addressLine || profile.city || profile.state) && (
           <p className="flex items-center gap-2 text-sm text-muted">
             <IconMapPin className="h-4 w-4 shrink-0" />
@@ -408,7 +474,124 @@ export default function PublicBookingPage() {
           </Card>
         </section>
       )}
+
+      {/* Avaliações */}
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-medium text-accent">Avaliações</h2>
+          {reviews && reviews.count > 0 && (
+            <span className="flex items-center gap-1.5 text-sm">
+              <Stars value={reviews.average} />
+              <span className="font-medium text-foreground">
+                {reviews.average.toFixed(1)}
+              </span>
+              <span className="text-muted">({reviews.count})</span>
+            </span>
+          )}
+        </div>
+
+        {user?.role === UserRole.CUSTOMER && (
+          <Card className="flex flex-col gap-3">
+            <p className="text-sm font-medium text-foreground">
+              Deixe sua avaliação
+            </p>
+            <StarPicker value={reviewRating} onChange={setReviewRating} />
+            <textarea
+              value={reviewComment}
+              onChange={(e) => setReviewComment(e.target.value)}
+              placeholder="Conte como foi seu atendimento (opcional)"
+              maxLength={500}
+              rows={3}
+              className="w-full rounded-[var(--radius-btn)] border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            />
+            {reviewMsg && (
+              <p
+                className={`text-sm ${reviewMsg.ok ? 'text-green-600' : 'text-red-500'}`}
+              >
+                {reviewMsg.text}
+              </p>
+            )}
+            <Button
+              type="button"
+              onClick={submitReview}
+              loading={reviewSubmitting}
+              className="self-start"
+            >
+              Enviar avaliação
+            </Button>
+          </Card>
+        )}
+
+        {reviews && reviews.items.length === 0 && (
+          <p className="text-sm text-muted">
+            Ainda não há avaliações. Seja o primeiro após ser atendido.
+          </p>
+        )}
+
+        <div className="flex flex-col gap-3">
+          {reviews?.items.map((r) => (
+            <div
+              key={r.id}
+              className="rounded-2xl border border-border bg-surface p-4"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-medium text-foreground">
+                  {r.customerName}
+                </span>
+                <Stars value={r.rating} />
+              </div>
+              {r.comment && (
+                <p className="mt-1 text-sm text-muted">{r.comment}</p>
+              )}
+              <p className="mt-1 text-xs text-muted">
+                {new Date(r.createdAt).toLocaleDateString('pt-BR')}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
     </Shell>
+  );
+}
+
+/** Estrelas de exibição (1-5). */
+function Stars({ value }: { value: number }) {
+  return (
+    <span className="inline-flex">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <IconStar
+          key={i}
+          className={`h-4 w-4 ${i <= Math.round(value) ? 'text-accent' : 'text-border'}`}
+        />
+      ))}
+    </span>
+  );
+}
+
+/** Seletor de estrelas (1-5) para o formulário de avaliação. */
+function StarPicker({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <button
+          key={i}
+          type="button"
+          aria-label={`${i} estrela(s)`}
+          onClick={() => onChange(i)}
+          className="p-0.5"
+        >
+          <IconStar
+            className={`h-6 w-6 transition-colors ${i <= value ? 'text-accent' : 'text-border hover:text-accent/50'}`}
+          />
+        </button>
+      ))}
+    </div>
   );
 }
 

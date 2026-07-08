@@ -11,20 +11,29 @@ import {
 } from '@nestjs/common';
 import {
   createAppointmentSchema,
+  createReviewSchema,
+  UserRole,
   type AppointmentResponseDto,
   type AvailabilityResponseDto,
   type CreateAppointmentDto,
+  type CreateReviewDto,
   type PublicProfileResponseDto,
+  type ReviewResponseDto,
+  type ReviewsResponseDto,
 } from '@repo/shared';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
 import {
   CurrentUser,
   type AuthUserPrincipal,
 } from '../../auth/interface/current-user.decorator';
+import { JwtAuthGuard } from '../../auth/interface/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../../auth/interface/optional-jwt-auth.guard';
+import { Roles } from '../../auth/interface/roles.decorator';
+import { RolesGuard } from '../../auth/interface/roles.guard';
 import { AvailabilityService } from '../application/availability.service';
 import { BookingService } from '../application/booking.service';
 import { PublicProfileService } from '../application/public-profile.service';
+import { ReviewsService } from '../application/reviews.service';
 
 /**
  * Rotas públicas do estabelecimento (por slug): ver disponibilidade e agendar.
@@ -36,6 +45,7 @@ export class PublicSchedulingController {
     private readonly availability: AvailabilityService,
     private readonly booking: BookingService,
     private readonly profile: PublicProfileService,
+    private readonly reviews: ReviewsService,
   ) {}
 
   @Get()
@@ -66,5 +76,23 @@ export class PublicSchedulingController {
     @CurrentUser() principal: AuthUserPrincipal | null,
   ): Promise<AppointmentResponseDto> {
     return this.booking.book(slug, dto, principal ?? null);
+  }
+
+  @Get('reviews')
+  getReviews(@Param('slug') slug: string): Promise<ReviewsResponseDto> {
+    return this.reviews.listBySlug(slug);
+  }
+
+  /** Avaliar exige cliente logado e um atendimento concluído aqui. */
+  @Post('reviews')
+  @HttpCode(201)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CUSTOMER)
+  review(
+    @Param('slug') slug: string,
+    @Body(new ZodValidationPipe(createReviewSchema)) dto: CreateReviewDto,
+    @CurrentUser() principal: AuthUserPrincipal,
+  ): Promise<ReviewResponseDto> {
+    return this.reviews.create(slug, principal, dto);
   }
 }

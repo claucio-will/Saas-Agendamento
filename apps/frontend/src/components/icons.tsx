@@ -133,6 +133,20 @@ export function IconMoon(p: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function IconStar(p: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden
+      {...p}
+    >
+      <path d="M12 2l2.9 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77 5.82 21l1.18-6.88-5-4.87 7.1-1.01z" />
+    </svg>
+  );
+}
+
 export function IconArrowLeft(p: SVGProps<SVGSVGElement>) {
   return (
     <Svg {...p}>
