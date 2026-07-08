@@ -1,9 +1,15 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { UserRole, type AuthUserDto } from '@repo/shared';
+import {
+  AppointmentStatus,
+  UserRole,
+  type AppointmentStatus as AppointmentStatusT,
+  type AuthUserDto,
+  type CustomerAppointmentDto,
+} from '@repo/shared';
 import { useAuth } from '../../lib/auth-context';
 import { homePathForRole } from '../../lib/routes';
 import { Button } from '../../components/ui/button';
@@ -16,13 +22,53 @@ const ROLE_LABELS: Record<AuthUserDto['role'], string> = {
   [UserRole.CUSTOMER]: 'Cliente',
 };
 
+const STATUS_LABEL: Record<AppointmentStatusT, string> = {
+  [AppointmentStatus.PENDING]: 'Pendente',
+  [AppointmentStatus.CONFIRMED]: 'Confirmado',
+  [AppointmentStatus.COMPLETED]: 'Concluído',
+  [AppointmentStatus.CANCELLED]: 'Cancelado',
+  [AppointmentStatus.NO_SHOW]: 'Não compareceu',
+};
+
+const STATUS_COLOR: Record<AppointmentStatusT, string> = {
+  [AppointmentStatus.PENDING]: 'bg-accent/20 text-accent',
+  [AppointmentStatus.CONFIRMED]: 'bg-green-500/15 text-green-600',
+  [AppointmentStatus.COMPLETED]: 'bg-primary/15 text-primary',
+  [AppointmentStatus.CANCELLED]: 'bg-red-500/15 text-red-500',
+  [AppointmentStatus.NO_SHOW]: 'bg-muted/20 text-muted',
+};
+
+function formatBRL(cents: number): string {
+  return (cents / 100).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
+}
+
 export default function ContaPage() {
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, authFetch } = useAuth();
   const router = useRouter();
+  const [appointments, setAppointments] = useState<
+    CustomerAppointmentDto[] | null
+  >(null);
 
   useEffect(() => {
     if (!loading && !user) router.replace('/login');
   }, [loading, user, router]);
+
+  const loadAppointments = useCallback(async () => {
+    try {
+      setAppointments(
+        await authFetch<CustomerAppointmentDto[]>('/me/appointments'),
+      );
+    } catch {
+      setAppointments([]);
+    }
+  }, [authFetch]);
+
+  useEffect(() => {
+    if (user?.role === UserRole.CUSTOMER) void loadAppointments();
+  }, [user, loadAppointments]);
 
   if (loading || !user) {
     return (
@@ -78,6 +124,55 @@ export default function ContaPage() {
             </Link>
           </div>
         </Card>
+      )}
+
+      {/* Meus agendamentos (cliente) */}
+      {isCustomer && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-sm font-medium text-accent">Meus agendamentos</h2>
+          {appointments === null ? (
+            <p className="text-sm text-muted">Carregando…</p>
+          ) : appointments.length === 0 ? (
+            <p className="text-sm text-muted">
+              Você ainda não tem agendamentos.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {appointments.map((a) => (
+                <Card key={a.id} className="flex flex-col gap-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-medium text-foreground">
+                        {a.serviceName}
+                      </p>
+                      <p className="text-xs text-muted">
+                        <Link
+                          href={`/b/${a.establishmentSlug}`}
+                          className="hover:text-foreground"
+                        >
+                          {a.establishmentName}
+                        </Link>{' '}
+                        · {a.professionalName}
+                      </p>
+                    </div>
+                    <span
+                      className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_COLOR[a.status]}`}
+                    >
+                      {STATUS_LABEL[a.status]}
+                    </span>
+                  </div>
+                  <p className="text-sm text-foreground">
+                    {new Date(a.startsAt).toLocaleString('pt-BR', {
+                      dateStyle: 'short',
+                      timeStyle: 'short',
+                    })}{' '}
+                    · {formatBRL(a.priceCents)}
+                  </p>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
       )}
 
       {/* Dados da conta */}

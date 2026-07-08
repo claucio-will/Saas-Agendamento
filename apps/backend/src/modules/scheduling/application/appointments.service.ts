@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import type {
   AppointmentResponseDto,
   AppointmentStatus,
+  CustomerAppointmentDto,
   CustomerSummaryDto,
   RescheduleAppointmentDto,
 } from '@repo/shared';
@@ -31,6 +32,22 @@ export class AppointmentsService {
       professionalId,
     );
     return rows.map((r) => toAppointmentDto(r as AppointmentRow));
+  }
+
+  /** Histórico de agendamentos do cliente (entre estabelecimentos). */
+  async listForCustomer(customerId: string): Promise<CustomerAppointmentDto[]> {
+    const rows = await this.repo.listCustomerAppointments(customerId);
+    return rows.map((r) => ({
+      id: r.id,
+      establishmentName: r.establishmentName,
+      establishmentSlug: r.establishmentSlug,
+      serviceName: r.serviceName,
+      professionalName: r.professionalName,
+      startsAt: r.startsAt.toISOString(),
+      endsAt: r.endsAt.toISOString(),
+      status: r.status,
+      priceCents: r.priceCents,
+    }));
   }
 
   async listCustomers(tenantId: string): Promise<CustomerSummaryDto[]> {

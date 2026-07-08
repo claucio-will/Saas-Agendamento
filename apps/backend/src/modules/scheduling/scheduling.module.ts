@@ -9,6 +9,7 @@ import { SchedulingRepository } from './infrastructure/scheduling.repository';
 import { AppointmentsController } from './interface/appointments.controller';
 import { CustomersController } from './interface/customers.controller';
 import { EstablishmentsController } from './interface/establishments.controller';
+import { MyAppointmentsController } from './interface/my-appointments.controller';
 import { PublicSchedulingController } from './interface/public-scheduling.controller';
 
 /** Bounded context Scheduling (disponibilidade, agendamento, agenda). */
@@ -19,6 +20,7 @@ import { PublicSchedulingController } from './interface/public-scheduling.contro
     EstablishmentsController,
     AppointmentsController,
     CustomersController,
+    MyAppointmentsController,
   ],
   providers: [
     SchedulingRepository,

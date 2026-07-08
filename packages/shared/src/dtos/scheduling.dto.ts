@@ -106,6 +106,22 @@ export const appointmentResponseSchema = z.object({
 });
 export type AppointmentResponseDto = z.infer<typeof appointmentResponseSchema>;
 
+/** Item do histórico do cliente (agendamentos entre estabelecimentos). */
+export const customerAppointmentResponseSchema = z.object({
+  id: z.string().uuid(),
+  establishmentName: z.string(),
+  establishmentSlug: z.string(),
+  serviceName: z.string(),
+  professionalName: z.string(),
+  startsAt: z.string(),
+  endsAt: z.string(),
+  status: appointmentStatusSchema,
+  priceCents: z.number().int(),
+});
+export type CustomerAppointmentDto = z.infer<
+  typeof customerAppointmentResponseSchema
+>;
+
 export const updateAppointmentStatusSchema = z.object({
   status: appointmentStatusSchema,
 });

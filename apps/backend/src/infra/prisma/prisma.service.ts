@@ -37,6 +37,21 @@ export class PrismaService
       return work(tx);
     });
   }
+
+  /**
+   * Executa `work` no contexto de um CLIENTE (não de um tenant). Habilita a
+   * policy `customer_self_read` para leitura dos próprios agendamentos entre
+   * estabelecimentos. Só permite SELECT dessas linhas (RLS). Ver PRD 2.8.
+   */
+  async runAsCustomer<T>(
+    customerId: string,
+    work: (tx: PrismaTransaction) => Promise<T>,
+  ): Promise<T> {
+    return this.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT set_config('app.current_customer', ${customerId}, true)`;
+      return work(tx);
+    });
+  }
 }
 
 /** Tipo do handle transacional passado a `runWithTenant`. */

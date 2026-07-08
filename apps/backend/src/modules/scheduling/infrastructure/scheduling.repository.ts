@@ -46,6 +46,19 @@ export interface BusyInterval {
   end: Date;
 }
 
+/** Item do histórico do cliente (agendamento com dados para exibição). */
+export interface CustomerAppointmentRow {
+  id: string;
+  establishmentName: string;
+  establishmentSlug: string;
+  serviceName: string;
+  professionalName: string;
+  startsAt: Date;
+  endsAt: Date;
+  status: AppointmentStatus;
+  priceCents: number;
+}
+
 /** Avaliação (leitura) do estabelecimento. */
 export interface ReviewRow {
   id: string;
@@ -145,6 +158,67 @@ export class SchedulingRepository {
         select: { id: true, name: true, bio: true },
       }),
     );
+  }
+
+  /** Histórico do cliente: seus agendamentos em todos os estabelecimentos. */
+  async listCustomerAppointments(
+    customerId: string,
+  ): Promise<CustomerAppointmentRow[]> {
+    const rows = await this.prisma.runAsCustomer(customerId, (tx) =>
+      tx.appointment.findMany({
+        orderBy: { startsAt: 'desc' },
+        select: {
+          id: true,
+          tenantId: true,
+          serviceId: true,
+          professionalId: true,
+          startsAt: true,
+          endsAt: true,
+          status: true,
+          priceCents: true,
+        },
+      }),
+    );
+    if (rows.length === 0) return [];
+
+    const tenantIds = [...new Set(rows.map((r) => r.tenantId))];
+    const tenants = await this.prisma.tenant.findMany({
+      where: { id: { in: tenantIds } },
+      select: { id: true, name: true, slug: true },
+    });
+    const tenantMap = new Map(tenants.map((t) => [t.id, t]));
+
+    // Nomes de serviço/profissional: resolvidos por tenant (RLS por tenant).
+    const names = new Map<string, string>();
+    for (const tid of tenantIds) {
+      const forTenant = rows.filter((r) => r.tenantId === tid);
+      await this.prisma.runWithTenant(tid, async (tx) => {
+        const [svcs, pros] = await Promise.all([
+          tx.service.findMany({
+            where: { id: { in: forTenant.map((r) => r.serviceId) } },
+            select: { id: true, name: true },
+          }),
+          tx.professional.findMany({
+            where: { id: { in: forTenant.map((r) => r.professionalId) } },
+            select: { id: true, name: true },
+          }),
+        ]);
+        svcs.forEach((s) => names.set(s.id, s.name));
+        pros.forEach((p) => names.set(p.id, p.name));
+      });
+    }
+
+    return rows.map((r) => ({
+      id: r.id,
+      establishmentName: tenantMap.get(r.tenantId)?.name ?? '',
+      establishmentSlug: tenantMap.get(r.tenantId)?.slug ?? '',
+      serviceName: names.get(r.serviceId) ?? 'Serviço',
+      professionalName: names.get(r.professionalId) ?? 'Profissional',
+      startsAt: r.startsAt,
+      endsAt: r.endsAt,
+      status: r.status,
+      priceCents: r.priceCents,
+    }));
   }
 
   // ---- Avaliações --------------------------------------------------------
