@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { UserRole } from '@repo/shared';
+import { TRIAL_DAYS, UserRole } from '@repo/shared';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { Tenant } from '../domain/tenant.entity';
@@ -20,11 +20,17 @@ export class PrismaTenantProvisioningService implements TenantProvisioner {
 
   async provision(data: ProvisionTenantData): Promise<ProvisionResult> {
     return this.prisma.$transaction(async (tx) => {
+      const trialEndsAt = new Date(
+        Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000,
+      );
       const tenant = await tx.tenant.create({
         data: {
           name: data.tenant.name,
           slug: data.tenant.slug,
           establishmentType: data.tenant.establishmentType,
+          plan: data.tenant.plan,
+          status: 'TRIAL',
+          trialEndsAt,
           documentId: data.tenant.documentId,
           phone: data.tenant.phone,
           addressLine: data.tenant.addressLine,

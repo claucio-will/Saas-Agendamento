@@ -1,5 +1,9 @@
 import { z } from 'zod';
-import { establishmentTypeSchema, tenantStatusSchema } from '../enums.js';
+import {
+  establishmentTypeSchema,
+  planTierSchema,
+  tenantStatusSchema,
+} from '../enums.js';
 
 /**
  * DTO de criação de tenant (onboarding self-service). Ver PRD 2.1.
@@ -44,6 +48,10 @@ export const myTenantResponseSchema = z.object({
   slug: z.string(),
   establishmentType: establishmentTypeSchema,
   status: tenantStatusSchema,
+  // Assinatura (PRD 2.13).
+  plan: planTierSchema,
+  trialEndsAt: z.string().nullable(),
+  subscribedAt: z.string().nullable(),
   documentId: z.string().nullable(),
   phone: z.string().nullable(),
   timezone: z.string(),
@@ -72,6 +80,56 @@ export const updateMyTenantSchema = z.object({
   slotIntervalMinutes: z.number().int().min(5).max(120).optional(),
 });
 export type UpdateMyTenantDto = z.infer<typeof updateMyTenantSchema>;
+
+/** Ativação simulada da assinatura (checkout fake — sem gateway). */
+export const activateSubscriptionSchema = z.object({
+  plan: planTierSchema.optional(),
+});
+export type ActivateSubscriptionDto = z.infer<
+  typeof activateSubscriptionSchema
+>;
+
+/** Troca de plano (upgrade/downgrade) pelo dono. */
+export const changePlanSchema = z.object({ plan: planTierSchema });
+export type ChangePlanDto = z.infer<typeof changePlanSchema>;
+
+// ---------------------------------------------------------------------------
+// Dashboard do Super Admin — controle das ASSINATURAS da plataforma. O admin
+// gerencia os assinantes (donos/estabelecimentos), não os clientes finais de
+// cada dono. Ver PRD 2.4.
+// ---------------------------------------------------------------------------
+
+/** Um assinante (estabelecimento + dono) na visão consolidada do admin. */
+export const platformSubscriberSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  slug: z.string(),
+  establishmentType: establishmentTypeSchema,
+  status: tenantStatusSchema,
+  plan: planTierSchema,
+  trialEndsAt: z.string().nullable(),
+  ownerName: z.string().nullable(),
+  ownerEmail: z.string().nullable(),
+  createdAt: z.string(), // assinou em
+  appointments: z.number().int(), // atividade/engajamento
+  lastActivityAt: z.string().nullable(), // último agendamento
+});
+export type PlatformSubscriberDto = z.infer<typeof platformSubscriberSchema>;
+
+/** Visão geral da plataforma: assinaturas + engajamento. */
+export const platformOverviewSchema = z.object({
+  subscribers: z.object({
+    total: z.number().int(),
+    active: z.number().int(),
+    trial: z.number().int(),
+    suspended: z.number().int(),
+    cancelled: z.number().int(),
+    newThisMonth: z.number().int(),
+  }),
+  appointmentsTotal: z.number().int(),
+  establishments: z.array(platformSubscriberSchema),
+});
+export type PlatformOverviewDto = z.infer<typeof platformOverviewSchema>;
 
 /**
  * Dono de estabelecimento na visão do Super Admin — o "cliente" da plataforma,

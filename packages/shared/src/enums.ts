@@ -35,6 +35,19 @@ export const establishmentTypeSchema = z.enum([
   EstablishmentType.TATTOO_STUDIO,
 ]);
 
+/** Plano de assinatura do estabelecimento. Preços/recursos em `plans.ts`. */
+export const PlanTier = {
+  ESSENCIAL: 'ESSENCIAL',
+  PROFISSIONAL: 'PROFISSIONAL',
+  STUDIO: 'STUDIO',
+} as const;
+export type PlanTier = (typeof PlanTier)[keyof typeof PlanTier];
+export const planTierSchema = z.enum([
+  PlanTier.ESSENCIAL,
+  PlanTier.PROFISSIONAL,
+  PlanTier.STUDIO,
+]);
+
 /** Modelo de precificação do serviço. Ver PRD 2.1. */
 export const PricingType = {
   FIXED: 'FIXED',

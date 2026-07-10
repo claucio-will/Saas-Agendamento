@@ -9,9 +9,10 @@ import {
   type TenantStatus as TenantStatusType,
 } from '@repo/shared';
 import { useAuth } from '../../../lib/auth-context';
-import { ESTABLISHMENT_LABEL, STATUS_COLOR, STATUS_LABEL } from '../../../lib/labels';
+import { ESTABLISHMENT_LABEL } from '../../../lib/labels';
 import { Button } from '../../../components/ui/button';
 import { Card, CardTitle } from '../../../components/ui/card';
+import { TenantBadge } from '../../../components/ui/badge';
 
 export default function EstabelecimentosPage() {
   const { user, loading, authFetch } = useAuth();
@@ -57,16 +58,18 @@ export default function EstabelecimentosPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-8">
-      <header>
+      <header className="flex flex-col gap-1">
         <p className="text-sm font-medium text-accent">Plataforma</p>
-        <h1 className="text-2xl font-bold text-foreground">Estabelecimentos</h1>
-        <p className="mt-1 text-sm text-muted">
+        <h1 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+          Estabelecimentos
+        </h1>
+        <p className="text-sm text-muted">
           Todos os estabelecimentos da plataforma. Você gerencia o status da
           assinatura de cada um.
         </p>
       </header>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
       <div className="grid gap-3 sm:grid-cols-2">
         {tenants?.length === 0 && (
@@ -81,11 +84,7 @@ export default function EstabelecimentosPage() {
                   {ESTABLISHMENT_LABEL[t.establishmentType]} · /b/{t.slug}
                 </p>
               </div>
-              <span
-                className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_COLOR[t.status]}`}
-              >
-                {STATUS_LABEL[t.status]}
-              </span>
+              <TenantBadge status={t.status} />
             </div>
             <div className="flex flex-wrap gap-2">
               <Button

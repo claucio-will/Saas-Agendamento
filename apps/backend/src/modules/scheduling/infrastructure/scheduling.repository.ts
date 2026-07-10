@@ -102,6 +102,8 @@ export interface CreateAppointmentRow {
   endsAt: Date;
   priceCents: number;
   notes: string | null;
+  // Fluxo público entra como PENDING; encaixe do dono pode já vir CONFIRMED.
+  status?: AppointmentStatus;
 }
 
 /** Acesso a dados do Scheduling. Tabelas de negócio via runWithTenant (RLS). */
@@ -418,9 +420,10 @@ export class SchedulingRepository {
     data: CreateAppointmentRow,
   ): Promise<{ id: string }> {
     try {
+      const { status, ...rest } = data;
       return await this.prisma.runWithTenant(tenantId, (tx) =>
         tx.appointment.create({
-          data: { tenantId, status: 'PENDING', ...data },
+          data: { tenantId, status: status ?? 'PENDING', ...rest },
           select: { id: true },
         }),
       );

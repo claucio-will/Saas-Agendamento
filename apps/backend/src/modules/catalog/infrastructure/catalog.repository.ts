@@ -2,9 +2,11 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import type {
   CreateProfessionalDto,
   CreateServiceDto,
+  CreateTimeBlockDto,
   ProfessionalResponseDto,
   ServiceResponseDto,
   SetWorkingHoursDto,
+  TimeBlockResponseDto,
   UpdateProfessionalDto,
   UpdateServiceDto,
 } from '@repo/shared';
@@ -176,6 +178,71 @@ export class CatalogRepository {
       }
       return this.mapProfessional(pro, dto.items);
     });
+  }
+
+  // ---- Folgas / bloqueios -------------------------------------------------
+
+  /** Bloqueios futuros do profissional (ordenados por início). */
+  listTimeBlocks(
+    tenantId: string,
+    professionalId: string,
+  ): Promise<TimeBlockResponseDto[]> {
+    return this.prisma.runWithTenant(tenantId, async (tx) => {
+      const rows = await tx.timeBlock.findMany({
+        where: { professionalId, endsAt: { gte: new Date() } },
+        orderBy: { startsAt: 'asc' },
+      });
+      return rows.map((r) => this.mapTimeBlock(r));
+    });
+  }
+
+  /** Cria um bloqueio. Retorna null se o profissional não existe no tenant. */
+  createTimeBlock(
+    tenantId: string,
+    professionalId: string,
+    dto: CreateTimeBlockDto,
+  ): Promise<TimeBlockResponseDto | null> {
+    return this.prisma.runWithTenant(tenantId, async (tx) => {
+      const pro = await tx.professional.findUnique({
+        where: { id: professionalId },
+      });
+      if (!pro) return null;
+      const block = await tx.timeBlock.create({
+        data: {
+          tenantId,
+          professionalId,
+          startsAt: new Date(dto.startsAt),
+          endsAt: new Date(dto.endsAt),
+          reason: dto.reason ?? null,
+        },
+      });
+      return this.mapTimeBlock(block);
+    });
+  }
+
+  deleteTimeBlock(tenantId: string, id: string): Promise<boolean> {
+    return this.prisma.runWithTenant(tenantId, (tx) =>
+      tx.timeBlock
+        .delete({ where: { id } })
+        .then(() => true)
+        .catch(() => false),
+    );
+  }
+
+  private mapTimeBlock(row: {
+    id: string;
+    professionalId: string;
+    startsAt: Date;
+    endsAt: Date;
+    reason: string | null;
+  }): TimeBlockResponseDto {
+    return {
+      id: row.id,
+      professionalId: row.professionalId,
+      startsAt: row.startsAt.toISOString(),
+      endsAt: row.endsAt.toISOString(),
+      reason: row.reason,
+    };
   }
 
   // ---- Helpers ------------------------------------------------------------

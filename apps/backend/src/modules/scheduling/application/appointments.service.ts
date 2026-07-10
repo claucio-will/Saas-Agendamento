@@ -1,7 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import type {
   AppointmentResponseDto,
   AppointmentStatus,
+  CreateManualAppointmentDto,
   CustomerAppointmentDto,
   CustomerSummaryDto,
   RescheduleAppointmentDto,
@@ -63,6 +68,52 @@ export class AppointmentsService {
       totalSpentCents: c.totalSpentCents,
       lastVisit: c.lastVisit.toISOString(),
     }));
+  }
+
+  /**
+   * Cria um agendamento manual (encaixe/walk-in/telefone) pelo dono. Diferente
+   * do fluxo público, o horário não precisa estar na grade de slots ofertados —
+   * a constraint `appointments_no_overlap` do banco impede o overbooking.
+   */
+  async createManual(
+    tenantId: string,
+    dto: CreateManualAppointmentDto,
+  ): Promise<AppointmentResponseDto> {
+    const service = await this.repo.getService(tenantId, dto.serviceId);
+    if (!service) throw new NotFoundException('Serviço não encontrado.');
+
+    const pros = await this.repo.getProfessionalsForService(
+      tenantId,
+      dto.serviceId,
+    );
+    if (!pros.some((p) => p.id === dto.professionalId)) {
+      throw new BadRequestException('Profissional não realiza este serviço.');
+    }
+
+    const startsAt = new Date(dto.startsAt);
+    if (Number.isNaN(startsAt.getTime())) {
+      throw new BadRequestException('Horário inválido.');
+    }
+    const endsAt = new Date(
+      startsAt.getTime() + service.durationMinutes * 60_000,
+    );
+
+    const { id } = await this.repo.createAppointment(tenantId, {
+      serviceId: dto.serviceId,
+      professionalId: dto.professionalId,
+      customerId: null,
+      customerName: dto.customerName,
+      // Dono nem sempre tem e-mail do cliente de encaixe; usa placeholder.
+      customerEmail: dto.customerEmail ?? 'sem-email@local',
+      customerPhone: dto.customerPhone ?? null,
+      startsAt,
+      endsAt,
+      priceCents: service.priceCents,
+      notes: dto.notes ?? null,
+      status: dto.status,
+    });
+
+    return this.load(tenantId, id);
   }
 
   async updateStatus(

@@ -124,6 +124,28 @@ export type CustomerAppointmentDto = z.infer<
   typeof customerAppointmentResponseSchema
 >;
 
+/**
+ * Agendamento criado manualmente pelo dono (encaixe/walk-in/telefone). Ao
+ * contrário do fluxo público, o horário pode ser fora da grade de slots — o
+ * banco (constraint `appointments_no_overlap`) é quem garante o não-overbooking.
+ */
+export const createManualAppointmentSchema = z.object({
+  serviceId: z.string().uuid(),
+  professionalId: z.string().uuid(),
+  startsAt: z.string().datetime(), // ISO
+  customerName: z.string().min(2).max(120),
+  customerPhone: z.string().min(8).max(20).optional(),
+  customerEmail: z.string().email().optional(),
+  notes: z.string().max(500).optional(),
+  // Dono normalmente já lança confirmado; aceita PENDING/CONFIRMED.
+  status: z
+    .enum([appointmentStatusSchema.enum.PENDING, appointmentStatusSchema.enum.CONFIRMED])
+    .default('CONFIRMED'),
+});
+export type CreateManualAppointmentDto = z.infer<
+  typeof createManualAppointmentSchema
+>;
+
 export const updateAppointmentStatusSchema = z.object({
   status: appointmentStatusSchema,
 });

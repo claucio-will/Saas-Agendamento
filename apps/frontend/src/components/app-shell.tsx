@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../lib/auth-context';
 import { SettingsMenu } from './settings-menu';
-import { IconGlobe, IconMenu } from './icons';
+import { ThemeToggle } from './theme-toggle';
+import { IconGlobe, IconLogout, IconMenu } from './icons';
 
 export interface ShellLink {
   href: string;
@@ -50,10 +51,10 @@ export function AppShell({
   const Brand = (
     <Link href={homeHref} className="flex items-center gap-2 px-2 py-1">
       <span
-        className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold ${
+        className={`flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold shadow-glow ${
           brand.variant === 'accent'
-            ? 'bg-accent text-accent-foreground'
-            : 'bg-primary text-primary-foreground'
+            ? 'bg-gradient-to-br from-accent to-amber-500 text-accent-foreground'
+            : 'bg-gradient-to-br from-primary to-emerald-600 text-primary-foreground'
         }`}
       >
         {brand.initial}
@@ -79,12 +80,18 @@ export function AppShell({
             href={l.href}
             onClick={onNavigate}
             aria-current={active ? 'page' : undefined}
-            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+            className={`relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
               active
-                ? 'bg-surface text-foreground'
-                : 'text-muted hover:bg-surface hover:text-foreground'
+                ? 'bg-primary/10 text-primary'
+                : 'text-muted hover:bg-surface-2 hover:text-foreground'
             }`}
           >
+            {active && (
+              <span
+                aria-hidden
+                className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-primary"
+              />
+            )}
             <span className="shrink-0 [&>svg]:h-5 [&>svg]:w-5">{l.icon}</span>
             {l.label}
           </Link>
@@ -94,28 +101,32 @@ export function AppShell({
   );
 
   const Footer = ({ onNavigate }: { onNavigate?: () => void }) => (
-    <div className="mt-auto flex flex-col gap-1 border-t border-border pt-2">
+    <div className="mt-auto flex flex-col gap-2 border-t border-border pt-3">
       {publicUrl && (
         <a
           href={publicUrl}
           target="_blank"
           rel="noopener noreferrer"
           onClick={onNavigate}
-          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:bg-surface hover:text-foreground"
+          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:bg-surface-2 hover:text-foreground"
         >
           <IconGlobe className="h-4 w-4 shrink-0" />
           Ver página pública ↗
         </a>
       )}
-      <div className="flex items-center justify-between px-1">
-        <SettingsMenu up align="left" />
-        <button
-          type="button"
-          onClick={doLogout}
-          className="rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-surface hover:text-foreground"
-        >
-          Sair
-        </button>
+      <button
+        type="button"
+        onClick={doLogout}
+        className="flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium text-muted transition-colors hover:bg-danger/10 hover:text-danger"
+      >
+        <IconLogout className="h-4 w-4 shrink-0" />
+        Sair
+      </button>
+      <div className="px-1 pt-1">
+        <p className="px-2 pb-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
+          Aparência
+        </p>
+        <ThemeToggle />
       </div>
     </div>
   );

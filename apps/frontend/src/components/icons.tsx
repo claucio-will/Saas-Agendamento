@@ -147,6 +147,50 @@ export function IconStar(p: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function IconWallet(p: SVGProps<SVGSVGElement>) {
+  return (
+    <Svg {...p}>
+      <path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v2" />
+      <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5a2 2 0 0 1-2-2z" />
+      <path d="M16 13h.01" />
+    </Svg>
+  );
+}
+
+export function IconLogout(p: SVGProps<SVGSVGElement>) {
+  return (
+    <Svg {...p}>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <path d="M16 17l5-5-5-5M21 12H9" />
+    </Svg>
+  );
+}
+
+export function IconClock(p: SVGProps<SVGSVGElement>) {
+  return (
+    <Svg {...p}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </Svg>
+  );
+}
+
+export function IconCheck(p: SVGProps<SVGSVGElement>) {
+  return (
+    <Svg {...p}>
+      <path d="M20 6 9 17l-5-5" />
+    </Svg>
+  );
+}
+
+export function IconArrowRight(p: SVGProps<SVGSVGElement>) {
+  return (
+    <Svg {...p}>
+      <path d="M5 12h14M12 5l7 7-7 7" />
+    </Svg>
+  );
+}
+
 export function IconArrowLeft(p: SVGProps<SVGSVGElement>) {
   return (
     <Svg {...p}>

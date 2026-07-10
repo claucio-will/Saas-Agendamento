@@ -38,6 +38,14 @@ enum TenantStatus {
   CANCELLED
 }
 
+/// Plano de assinatura contratado pelo dono. Preços/recursos vivem no
+/// pacote compartilhado (`@repo/shared` → PLANS); aqui só a escolha. Ver PRD 2.13.
+enum PlanTier {
+  ESSENCIAL
+  PROFISSIONAL
+  STUDIO
+}
+
 /// Modelo de precificação do serviço. Ver PRD 2.1.
 enum PricingType {
   FIXED // preço fixo
@@ -63,6 +71,10 @@ model Tenant {
   slug              String            @unique
   establishmentType EstablishmentType @map("establishment_type")
   status            TenantStatus      @default(TRIAL)
+  // Assinatura (simulada — sem gateway de pagamento). Ver PRD 2.13.
+  plan              PlanTier          @default(ESSENCIAL)
+  trialEndsAt       DateTime?         @map("trial_ends_at")
+  subscribedAt      DateTime?         @map("subscribed_at")
   documentId        String?           @map("document_id")
   phone             String?
   timezone          String            @default("America/Sao_Paulo")

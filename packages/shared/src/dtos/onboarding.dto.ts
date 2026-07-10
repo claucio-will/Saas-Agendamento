@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { EstablishmentType } from '../enums.js';
+import { EstablishmentType, planTierSchema } from '../enums.js';
 import { authResponseSchema } from './auth.dto.js';
 import { tenantResponseSchema } from './tenant.dto.js';
 
@@ -39,6 +39,8 @@ const baseFields = {
   phone: z.string().min(8).max(20),
   address: addressSchema,
   owner: ownerSchema,
+  // Plano escolhido no onboarding — inicia em trial (sem cobrança). Ver PRD 2.13.
+  plan: planTierSchema,
   acceptTerms: acceptTermsSchema,
 };
 

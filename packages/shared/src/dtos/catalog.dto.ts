@@ -82,6 +82,30 @@ export type ProfessionalResponseDto = z.infer<
 >;
 
 // ---------------------------------------------------------------------------
+// Folgas / bloqueios de agenda do profissional (PRD 2.5/2.6)
+// ---------------------------------------------------------------------------
+export const createTimeBlockSchema = z
+  .object({
+    startsAt: z.string().datetime(), // ISO
+    endsAt: z.string().datetime(), // ISO
+    reason: z.string().max(200).optional(),
+  })
+  .refine((v) => new Date(v.endsAt) > new Date(v.startsAt), {
+    message: 'O fim deve ser depois do início.',
+    path: ['endsAt'],
+  });
+export type CreateTimeBlockDto = z.infer<typeof createTimeBlockSchema>;
+
+export const timeBlockResponseSchema = z.object({
+  id: z.string().uuid(),
+  professionalId: z.string().uuid(),
+  startsAt: z.string(),
+  endsAt: z.string(),
+  reason: z.string().nullable(),
+});
+export type TimeBlockResponseDto = z.infer<typeof timeBlockResponseSchema>;
+
+// ---------------------------------------------------------------------------
 // Categorias de serviço (globais, plataforma). PRD 2.7
 // ---------------------------------------------------------------------------
 export const serviceCategoryResponseSchema = z.object({

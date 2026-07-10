@@ -26,6 +26,8 @@ function makeRepo(overrides: Partial<TenantRepository> = {}): TenantRepository {
     updateStatus: jest.fn(async () => null),
     findSettingsById: jest.fn(async () => null),
     updateSettings: jest.fn(async () => null),
+    activateSubscription: jest.fn(async () => null),
+    changePlan: jest.fn(async () => null),
     ...overrides,
   };
 }

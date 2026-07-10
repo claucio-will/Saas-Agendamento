@@ -4,14 +4,17 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Design system — tokens semânticos. As utilidades do Tailwind (bg-background,
- * text-foreground, bg-primary, text-accent, border-border...) referenciam as
- * variáveis abaixo, então o dark mode troca os valores sem recompilar classes.
- * Paleta elegante do PRD 3.3.
+ * Design system — tokens semânticos (refresh "modern dark", 2026-07-08).
+ * As utilidades do Tailwind (bg-background, text-foreground, bg-primary,
+ * text-accent, border-border, bg-surface, shadow-card, shadow-glow...)
+ * referenciam as variáveis abaixo — o dark mode troca os valores sem
+ * recompilar classes. Estética: superfícies em camadas, bordas hairline,
+ * verde-esmeralda vívido de ação + dourado de destaque, glow no CTA.
  */
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-border: var(--border);
@@ -19,37 +22,70 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-ring: var(--ring);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
 
-  --radius-btn: 0.625rem;
+  --radius-btn: 0.75rem;
+  --radius-card: 1.25rem;
+
+  --shadow-sm: var(--elev-sm);
+  --shadow-card: var(--elev-card);
+  --shadow-lg: var(--elev-lg);
+  --shadow-glow: var(--elev-glow);
+
+  --ease-fluid: cubic-bezier(0.16, 1, 0.3, 1);
 
   --font-sans:
-    var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
+    var(--font-sans-var), ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
 /* Light mode (padrão) */
 :root {
-  --background: #fafaf7; /* off-white */
+  --background: #f5f6f8; /* cinza-neve frio */
   --surface: #ffffff;
-  --foreground: #1f2937; /* grafite */
-  --muted: #6b7280;
-  --border: #e5e1d8; /* neutro quente */
-  --primary: #1b4332; /* verde-escuro profundo */
-  --primary-foreground: #fafaf7;
-  --accent: #c9a227; /* dourado suave */
-  --accent-foreground: #1f2937;
+  --surface-2: #eef1f5; /* elevação secundária / trilhos */
+  --foreground: #0f1729; /* slate-950 */
+  --muted: #5b6475;
+  --border: #e4e7ee;
+  --primary: #047857; /* esmeralda profundo */
+  --primary-foreground: #ffffff;
+  --accent: #b45309; /* âmbar legível no claro */
+  --accent-foreground: #ffffff;
+  --ring: #10b981;
+  --danger: #dc2626;
+  --success: #059669;
+
+  --elev-sm: 0 1px 2px rgba(15, 23, 41, 0.06);
+  --elev-card: 0 8px 30px -12px rgba(15, 23, 41, 0.16);
+  --elev-lg: 0 24px 60px -20px rgba(15, 23, 41, 0.22);
+  --elev-glow: 0 8px 24px -6px color-mix(in oklab, var(--primary) 45%, transparent);
+  --glow-a: color-mix(in oklab, var(--primary) 14%, transparent);
+  --glow-b: color-mix(in oklab, var(--accent) 12%, transparent);
 }
 
-/* Dark mode */
+/* Dark mode — experiência principal do produto */
 .dark {
-  --background: #111827;
-  --surface: #1f2937;
-  --foreground: #f3f4f6;
-  --muted: #9ca3af;
-  --border: #374151;
-  --primary: #1b4332;
-  --primary-foreground: #fafaf7;
-  --accent: #c9a227;
-  --accent-foreground: #111827;
+  --background: #0a0e17; /* quase-preto azulado (evita OLED smear) */
+  --surface: #141a26; /* card elevado */
+  --surface-2: #1c2432; /* elevação 2 / inputs */
+  --foreground: #eef2f8;
+  --muted: #96a2b6;
+  --border: #253044; /* hairline visível */
+  --primary: #10b981; /* esmeralda vívido */
+  --primary-foreground: #04160e; /* texto escuro sobre o esmeralda vívido */
+  --accent: #fbbf24; /* dourado que brilha no escuro */
+  --accent-foreground: #1a1206;
+  --ring: #34d399;
+  --danger: #f87171;
+  --success: #34d399;
+
+  --elev-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --elev-card: 0 12px 40px -16px rgba(0, 0, 0, 0.6);
+  --elev-lg: 0 30px 70px -24px rgba(0, 0, 0, 0.7);
+  --elev-glow: 0 10px 30px -6px color-mix(in oklab, var(--primary) 40%, transparent);
+  --glow-a: color-mix(in oklab, var(--primary) 22%, transparent);
+  --glow-b: color-mix(in oklab, var(--accent) 14%, transparent);
 }
 
 html {
@@ -60,4 +96,35 @@ body {
   background-color: var(--background);
   color: var(--foreground);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Brilho ambiente sutil no fundo — dá profundidade em toda página. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 40rem at 15% -10%, var(--glow-a), transparent 60%),
+    radial-gradient(50rem 40rem at 100% 0%, var(--glow-b), transparent 55%);
+}
+
+/* Respeita usuários que pedem menos movimento. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Utilidades de composição reaproveitáveis */
+@utility surface-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
 }

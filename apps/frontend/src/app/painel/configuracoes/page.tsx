@@ -141,16 +141,18 @@ export default function ConfiguracoesPage() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-8">
-      <header>
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
+      <header className="flex flex-col gap-1">
         <p className="text-sm font-medium text-accent">Painel do dono</p>
-        <h1 className="text-2xl font-bold text-foreground">Configurações</h1>
-        <p className="mt-1 text-sm text-muted">
+        <h1 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+          Configurações
+        </h1>
+        <p className="text-sm text-muted">
           Dados do estabelecimento e regras da agenda.
         </p>
       </header>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         {/* Estabelecimento */}
@@ -291,7 +293,7 @@ function Select({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-11 w-full rounded-[var(--radius-btn)] border border-border bg-surface px-3 text-sm text-foreground"
+        className="h-11 w-full rounded-[var(--radius-btn)] border border-border bg-surface-2 px-3 text-sm text-foreground"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>

@@ -5,13 +5,16 @@ import { useRouter } from 'next/navigation';
 import {
   UserRole,
   type CreateProfessionalDto,
+  type CreateTimeBlockDto,
   type ProfessionalResponseDto,
   type SetWorkingHoursDto,
+  type TimeBlockResponseDto,
 } from '@repo/shared';
 import { useAuth } from '../../../lib/auth-context';
 import { Button } from '../../../components/ui/button';
 import { Card, CardTitle } from '../../../components/ui/card';
 import { Input } from '../../../components/ui/input';
+import { ActiveBadge } from '../../../components/ui/badge';
 
 const WEEKDAYS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
@@ -135,12 +138,14 @@ export default function ProfissionaisPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-8">
-      <header>
+      <header className="flex flex-col gap-1">
         <p className="text-sm font-medium text-accent">Painel do dono</p>
-        <h1 className="text-2xl font-bold text-foreground">Profissionais</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+          Profissionais
+        </h1>
       </header>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
       <div className="grid gap-6 lg:grid-cols-[22rem_1fr] lg:items-start">
         {/* Novo profissional */}
@@ -197,6 +202,177 @@ export default function ProfissionaisPage() {
   );
 }
 
+/** Formata um intervalo de bloqueio para exibição (dia + horas). */
+function formatBlock(startsAt: string, endsAt: string): string {
+  const s = new Date(startsAt);
+  const e = new Date(endsAt);
+  const day = s.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  const hm = (d: Date) =>
+    d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  return `${day} · ${hm(s)}–${hm(e)}`;
+}
+
+/** Painel de folgas/bloqueios de um profissional (lista + criar + remover). */
+function TimeBlocksPanel({
+  professionalId,
+  authFetch,
+  onError,
+}: {
+  professionalId: string;
+  authFetch: <T>(
+    path: string,
+    opts?: { method?: string; body?: unknown },
+  ) => Promise<T>;
+  onError: (msg: string) => void;
+}) {
+  const [blocks, setBlocks] = useState<TimeBlockResponseDto[] | null>(null);
+  const [date, setDate] = useState('');
+  const [start, setStart] = useState('12:00');
+  const [end, setEnd] = useState('13:00');
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      setBlocks(
+        await authFetch<TimeBlockResponseDto[]>(
+          `/professionals/${professionalId}/time-blocks`,
+        ),
+      );
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'Erro ao carregar folgas.');
+    }
+  }, [authFetch, professionalId, onError]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function add() {
+    if (!date) {
+      onError('Escolha o dia da folga.');
+      return;
+    }
+    // date + time (horário local do navegador) → ISO UTC.
+    const startsAt = new Date(`${date}T${start}`);
+    const endsAt = new Date(`${date}T${end}`);
+    if (endsAt <= startsAt) {
+      onError('O fim deve ser depois do início.');
+      return;
+    }
+    setBusy(true);
+    onError('');
+    try {
+      const dto: CreateTimeBlockDto = {
+        startsAt: startsAt.toISOString(),
+        endsAt: endsAt.toISOString(),
+        ...(reason.trim() ? { reason: reason.trim() } : {}),
+      };
+      await authFetch(`/professionals/${professionalId}/time-blocks`, {
+        method: 'POST',
+        body: dto,
+      });
+      setReason('');
+      await load();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'Erro ao criar folga.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove(id: string) {
+    setBusy(true);
+    onError('');
+    try {
+      await authFetch(`/time-blocks/${id}`, { method: 'DELETE' });
+      await load();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'Erro ao remover folga.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-1 flex flex-col gap-3 border-t border-border pt-3">
+      <p className="text-sm font-medium text-foreground">
+        Folgas e bloqueios (almoço, folga, imprevisto)
+      </p>
+
+      {/* Lista */}
+      {blocks === null ? (
+        <p className="text-sm text-muted">Carregando…</p>
+      ) : blocks.length === 0 ? (
+        <p className="text-sm text-muted">Nenhum bloqueio futuro.</p>
+      ) : (
+        <ul className="flex flex-col gap-1.5">
+          {blocks.map((b) => (
+            <li
+              key={b.id}
+              className="flex items-center justify-between gap-2 text-sm"
+            >
+              <span className="text-foreground">
+                {formatBlock(b.startsAt, b.endsAt)}
+                {b.reason ? (
+                  <span className="text-muted"> · {b.reason}</span>
+                ) : null}
+              </span>
+              <button
+                type="button"
+                onClick={() => remove(b.id)}
+                disabled={busy}
+                className="text-xs text-danger hover:underline disabled:opacity-50"
+              >
+                Remover
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* Novo bloqueio */}
+      <div className="flex flex-wrap items-end gap-2">
+        <Input
+          label="Dia"
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="max-w-[10rem]"
+        />
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium text-foreground">Início</label>
+          <input
+            type="time"
+            value={start}
+            onChange={(e) => setStart(e.target.value)}
+            className="h-11 rounded-[var(--radius-btn)] border border-border bg-surface-2 px-2 text-sm text-foreground"
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium text-foreground">Fim</label>
+          <input
+            type="time"
+            value={end}
+            onChange={(e) => setEnd(e.target.value)}
+            className="h-11 rounded-[var(--radius-btn)] border border-border bg-surface-2 px-2 text-sm text-foreground"
+          />
+        </div>
+        <Input
+          label="Motivo (opcional)"
+          placeholder="Almoço"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          className="max-w-[12rem]"
+        />
+        <Button size="sm" loading={busy} onClick={add}>
+          Adicionar
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 /** Card de um profissional: status + editor de jornada semanal. */
 function ProfessionalCard({
   professional: p,
@@ -215,6 +391,7 @@ function ProfessionalCard({
   onError: (msg: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [blocksOpen, setBlocksOpen] = useState(false);
   const [shifts, setShifts] = useState<DayShift[]>(() =>
     shiftsFromProfessional(p),
   );
@@ -274,25 +451,32 @@ function ProfessionalCard({
               : 'Sem jornada definida'}
           </p>
         </div>
-        <span
-          className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-            p.active
-              ? 'bg-green-500/15 text-green-600'
-              : 'bg-muted/20 text-muted'
-          }`}
-        >
-          {p.active ? 'Ativo' : 'Inativo'}
-        </span>
+        <ActiveBadge active={p.active} />
       </div>
 
       <div className="flex flex-wrap gap-2">
         <Button size="sm" variant="outline" onClick={() => setOpen((v) => !v)}>
           {open ? 'Fechar jornada' : 'Editar jornada'}
         </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setBlocksOpen((v) => !v)}
+        >
+          {blocksOpen ? 'Fechar folgas' : 'Folgas e bloqueios'}
+        </Button>
         <Button size="sm" variant="ghost" onClick={onToggleActive}>
           {p.active ? 'Desativar' : 'Ativar'}
         </Button>
       </div>
+
+      {blocksOpen && (
+        <TimeBlocksPanel
+          professionalId={p.id}
+          authFetch={authFetch}
+          onError={onError}
+        />
+      )}
 
       {open && (
         <div className="mt-1 flex flex-col gap-2 border-t border-border pt-3">
@@ -321,7 +505,7 @@ function ProfessionalCard({
                   onChange={(e) =>
                     updateShift(weekday, { start: e.target.value })
                   }
-                  className="h-9 rounded-[var(--radius-btn)] border border-border bg-surface px-2 text-sm text-foreground disabled:opacity-50"
+                  className="h-9 rounded-[var(--radius-btn)] border border-border bg-surface-2 px-2 text-sm text-foreground disabled:opacity-50"
                 />
                 <span className="text-muted">até</span>
                 <input
@@ -329,7 +513,7 @@ function ProfessionalCard({
                   value={shift.end}
                   disabled={!shift.enabled}
                   onChange={(e) => updateShift(weekday, { end: e.target.value })}
-                  className="h-9 rounded-[var(--radius-btn)] border border-border bg-surface px-2 text-sm text-foreground disabled:opacity-50"
+                  className="h-9 rounded-[var(--radius-btn)] border border-border bg-surface-2 px-2 text-sm text-foreground disabled:opacity-50"
                 />
               </div>
             );

@@ -6,13 +6,25 @@ import { useRouter } from 'next/navigation';
 import {
   EstablishmentType,
   onboardingSchema,
+  PLANS,
+  TRIAL_DAYS,
   type OnboardingDto,
+  type PlanTier,
 } from '@repo/shared';
 import { useAuth } from '../../lib/auth-context';
 import { slugify } from '../../lib/slugify';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Card, CardDescription, CardTitle } from '../../components/ui/card';
+import { IconCheck } from '../../components/icons';
+
+/** centavos → "R$ 0,00". */
+function formatBRL(cents: number): string {
+  return (cents / 100).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
+}
 
 const TYPES = [
   {
@@ -54,6 +66,7 @@ export default function OnboardingPage() {
   const router = useRouter();
 
   const [type, setType] = useState<EstablishmentType | null>(null);
+  const [plan, setPlan] = useState<PlanTier | null>(null);
   const [form, setForm] = useState({ ...EMPTY });
   const [slugEdited, setSlugEdited] = useState(false);
   const [offersChemicalServices, setOffersChemical] = useState(false);
@@ -78,7 +91,7 @@ export default function OnboardingPage() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!type) return;
+    if (!type || !plan) return;
     setFormError(null);
 
     const base = {
@@ -98,6 +111,7 @@ export default function OnboardingPage() {
         email: form.ownerEmail,
         password: form.ownerPassword,
       },
+      plan,
       acceptTerms,
     };
     const payload =
@@ -130,7 +144,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-lg flex-col gap-6 px-4 py-8">
+    <main className="mx-auto flex min-h-dvh max-w-3xl flex-col gap-6 px-4 py-8">
       <div>
         <Link href="/" className="text-sm text-muted hover:text-foreground">
           ← Início
@@ -138,9 +152,15 @@ export default function OnboardingPage() {
       </div>
 
       <div>
-        <p className="text-sm font-medium text-accent">Cadastro do estabelecimento</p>
-        <h1 className="text-2xl font-bold text-foreground">
-          {type ? 'Dados do estabelecimento' : 'Que tipo de negócio é o seu?'}
+        <p className="text-sm font-medium text-accent">
+          Cadastro do estabelecimento
+        </p>
+        <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
+          {!type
+            ? 'Que tipo de negócio é o seu?'
+            : !plan
+              ? 'Escolha seu plano'
+              : 'Dados do estabelecimento'}
         </h1>
       </div>
 
@@ -167,7 +187,70 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      {type && (
+      {/* Passo 2 — escolher o plano */}
+      {type && !plan && (
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-muted">
+            Comece com{' '}
+            <strong className="text-foreground">
+              {TRIAL_DAYS} dias grátis
+            </strong>
+            . Você só ativa a cobrança quando quiser — sem cartão agora.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {PLANS.map((p) => (
+              <button
+                key={p.tier}
+                type="button"
+                onClick={() => setPlan(p.tier)}
+                className={`relative flex flex-col gap-3 rounded-[var(--radius-card)] border p-5 text-left transition-[transform,border-color] duration-200 ease-[var(--ease-fluid)] hover:-translate-y-0.5 ${
+                  p.highlight
+                    ? 'border-primary bg-primary/5 shadow-glow'
+                    : 'border-border bg-surface hover:border-ring/50'
+                }`}
+              >
+                {p.highlight && (
+                  <span className="absolute -top-2.5 right-4 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary-foreground">
+                    Popular
+                  </span>
+                )}
+                <div>
+                  <p className="font-bold text-foreground">{p.name}</p>
+                  <p className="text-xs text-muted">{p.tagline}</p>
+                </div>
+                <p className="flex items-baseline gap-1">
+                  <span className="text-2xl font-extrabold tabular-nums text-foreground">
+                    {formatBRL(p.priceCents)}
+                  </span>
+                  <span className="text-xs text-muted">/mês</span>
+                </p>
+                <ul className="flex flex-col gap-1.5 text-sm text-muted">
+                  {p.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2">
+                      <IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <span className="mt-1 text-sm font-semibold text-accent">
+                  Escolher {p.name} →
+                </span>
+              </button>
+            ))}
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            className="self-start"
+            onClick={() => setType(null)}
+          >
+            ← Voltar
+          </Button>
+        </div>
+      )}
+
+      {/* Passo 3 — dados do estabelecimento e conta */}
+      {type && plan && (
         <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
           <Card>
             <CardTitle>Estabelecimento</CardTitle>
@@ -343,9 +426,9 @@ export default function OnboardingPage() {
             <Button
               type="button"
               variant="ghost"
-              onClick={() => setType(null)}
+              onClick={() => setPlan(null)}
             >
-              ← Voltar
+              ← Plano
             </Button>
             <Button type="submit" size="lg" loading={loading}>
               Criar estabelecimento

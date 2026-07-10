@@ -15,6 +15,7 @@ import { useAuth } from '../../../lib/auth-context';
 import { Button } from '../../../components/ui/button';
 import { Card, CardTitle } from '../../../components/ui/card';
 import { Input } from '../../../components/ui/input';
+import { ActiveBadge } from '../../../components/ui/badge';
 
 const PRICING_LABEL: Record<PricingTypeT, string> = {
   [PricingType.FIXED]: 'Preço fixo',
@@ -142,12 +143,14 @@ export default function ServicosPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-8">
-      <header>
+      <header className="flex flex-col gap-1">
         <p className="text-sm font-medium text-accent">Painel do dono</p>
-        <h1 className="text-2xl font-bold text-foreground">Serviços</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+          Serviços
+        </h1>
       </header>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
       <div className="grid gap-6 lg:grid-cols-[24rem_1fr] lg:items-start">
         {/* Novo serviço */}
@@ -195,7 +198,7 @@ export default function ServicosPage() {
               onChange={(e) =>
                 patchForm({ pricingType: e.target.value as PricingTypeT })
               }
-              className="h-11 w-full rounded-[var(--radius-btn)] border border-border bg-surface px-3 text-sm text-foreground"
+              className="h-11 w-full rounded-[var(--radius-btn)] border border-border bg-surface-2 px-3 text-sm text-foreground"
             >
               {Object.values(PricingType).map((pt) => (
                 <option key={pt} value={pt}>
@@ -354,15 +357,7 @@ function ServiceCard({
               ` · ${s.professionalIds.length} profissional(is)`}
           </p>
         </div>
-        <span
-          className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-            s.active
-              ? 'bg-green-500/15 text-green-600'
-              : 'bg-muted/20 text-muted'
-          }`}
-        >
-          {s.active ? 'Ativo' : 'Inativo'}
-        </span>
+        <ActiveBadge active={s.active} />
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -379,7 +374,7 @@ function ServiceCard({
         <Button
           size="sm"
           variant="ghost"
-          className="text-red-500"
+          className="text-danger"
           onClick={remove}
         >
           Excluir
@@ -426,7 +421,7 @@ function ServiceCard({
               onChange={(e) =>
                 patchForm({ pricingType: e.target.value as PricingTypeT })
               }
-              className="h-11 w-full rounded-[var(--radius-btn)] border border-border bg-surface px-3 text-sm text-foreground"
+              className="h-11 w-full rounded-[var(--radius-btn)] border border-border bg-surface-2 px-3 text-sm text-foreground"
             >
               {Object.values(PricingType).map((pt) => (
                 <option key={pt} value={pt}>

@@ -2,9 +2,11 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import type {
   CreateProfessionalDto,
   CreateServiceDto,
+  CreateTimeBlockDto,
   ProfessionalResponseDto,
   ServiceResponseDto,
   SetWorkingHoursDto,
+  TimeBlockResponseDto,
   UpdateProfessionalDto,
   UpdateServiceDto,
 } from '@repo/shared';
@@ -64,5 +66,33 @@ export class CatalogService {
     );
     if (!updated) throw new NotFoundException('Profissional não encontrado.');
     return updated;
+  }
+
+  // ---- Folgas / bloqueios ---------------------------------------------------
+
+  listTimeBlocks(
+    tenantId: string,
+    professionalId: string,
+  ): Promise<TimeBlockResponseDto[]> {
+    return this.repo.listTimeBlocks(tenantId, professionalId);
+  }
+
+  async createTimeBlock(
+    tenantId: string,
+    professionalId: string,
+    dto: CreateTimeBlockDto,
+  ): Promise<TimeBlockResponseDto> {
+    const created = await this.repo.createTimeBlock(
+      tenantId,
+      professionalId,
+      dto,
+    );
+    if (!created) throw new NotFoundException('Profissional não encontrado.');
+    return created;
+  }
+
+  async deleteTimeBlock(tenantId: string, id: string): Promise<void> {
+    const ok = await this.repo.deleteTimeBlock(tenantId, id);
+    if (!ok) throw new NotFoundException('Bloqueio não encontrado.');
   }
 }

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { TenantStatus } from '@repo/shared';
+import type { PlanTier, TenantStatus } from '@repo/shared';
 import type { Tenant as PrismaTenant } from '@prisma/client';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { Tenant } from '../domain/tenant.entity';
@@ -67,6 +67,30 @@ export class PrismaTenantRepository implements TenantRepository {
     return row ? this.toSettings(row) : null;
   }
 
+  async activateSubscription(
+    id: string,
+    plan?: PlanTier,
+  ): Promise<TenantSettings | null> {
+    const row = await this.prisma.tenant
+      .update({
+        where: { id },
+        data: {
+          status: 'ACTIVE',
+          subscribedAt: new Date(),
+          ...(plan ? { plan } : {}),
+        },
+      })
+      .catch(() => null);
+    return row ? this.toSettings(row) : null;
+  }
+
+  async changePlan(id: string, plan: PlanTier): Promise<TenantSettings | null> {
+    const row = await this.prisma.tenant
+      .update({ where: { id }, data: { plan } })
+      .catch(() => null);
+    return row ? this.toSettings(row) : null;
+  }
+
   private toSettings(row: PrismaTenant): TenantSettings {
     return {
       id: row.id,
@@ -74,6 +98,9 @@ export class PrismaTenantRepository implements TenantRepository {
       slug: row.slug,
       establishmentType: row.establishmentType,
       status: row.status,
+      plan: row.plan,
+      trialEndsAt: row.trialEndsAt,
+      subscribedAt: row.subscribedAt,
       documentId: row.documentId,
       phone: row.phone,
       timezone: row.timezone,

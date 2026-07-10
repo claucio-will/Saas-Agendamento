@@ -4,16 +4,18 @@ import type { ReactNode } from 'react';
 /** Marca reutilizada nos painéis de autenticação. */
 function Brand({ light }: { light?: boolean }) {
   return (
-    <span className="inline-flex items-center gap-2">
+    <span className="inline-flex items-center gap-2.5">
       <span
-        className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold ${
-          light ? 'bg-accent text-accent-foreground' : 'bg-primary text-primary-foreground'
+        className={`flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold ${
+          light
+            ? 'bg-white/10 text-white ring-1 ring-white/20'
+            : 'bg-gradient-to-br from-primary to-emerald-600 text-primary-foreground shadow-glow'
         }`}
       >
         A
       </span>
       <span
-        className={`text-lg font-bold ${light ? 'text-primary-foreground' : 'text-foreground'}`}
+        className={`text-lg font-bold tracking-tight ${light ? 'text-white' : 'text-foreground'}`}
       >
         Agendamento
       </span>
@@ -22,9 +24,9 @@ function Brand({ light }: { light?: boolean }) {
 }
 
 /**
- * Layout de autenticação em duas colunas (split-screen): painel de marca à
- * esquerda (desktop) e o formulário à direita. Dá uma aparência moderna e
- * consistente ao login e ao cadastro.
+ * Layout de autenticação em duas colunas (split-screen), minimalista: painel de
+ * marca escuro e discreto à esquerda (desktop) e o formulário à direita.
+ * Compartilhado por login e cadastro. Ver PRD 3.3.
  */
 export function AuthShell({
   title,
@@ -38,50 +40,39 @@ export function AuthShell({
   footer?: ReactNode;
 }) {
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-2">
-      {/* Painel de marca (desktop) */}
-      <aside className="relative hidden overflow-hidden bg-primary p-10 text-primary-foreground lg:flex lg:flex-col lg:justify-between">
-        {/* Blobs decorativos */}
+    <div className="min-h-dvh lg:grid lg:grid-cols-2">
+      {/* Painel de marca (desktop) — dark, minimalista */}
+      <aside className="relative hidden overflow-hidden bg-gradient-to-br from-emerald-900 via-[#0a1512] to-[#060a10] p-10 lg:flex lg:flex-col lg:justify-between xl:p-14">
+        {/* Glow ambiente sutil */}
         <div
           aria-hidden
-          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-accent/25 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-accent/10 blur-3xl"
+          className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-emerald-400/15 blur-3xl"
         />
 
         <div className="relative">
           <Brand light />
         </div>
 
-        <div className="relative flex flex-col gap-4">
-          <h2 className="text-3xl font-bold leading-tight">
-            Sua agenda cheia, sem esforço.
-          </h2>
-          <p className="max-w-sm text-primary-foreground/80">
-            Barbearias, salões e estúdios recebem agendamentos online 24h.
-            Serviços, equipe e horários num painel só.
-          </p>
-          <ul className="mt-2 flex flex-col gap-2 text-sm text-primary-foreground/80">
-            <li>✓ Página pública própria para agendamentos</li>
-            <li>✓ Agenda por profissional, sem overbooking</li>
-            <li>✓ Controle total de serviços e equipe</li>
-          </ul>
-        </div>
+        <h2 className="relative max-w-sm text-4xl font-extrabold leading-[1.1] tracking-tight text-white">
+          Sua agenda cheia,{' '}
+          <span className="bg-gradient-to-r from-emerald-300 to-amber-300 bg-clip-text text-transparent">
+            sem esforço
+          </span>
+          .
+        </h2>
 
-        <p className="relative text-xs text-primary-foreground/60">
+        <p className="relative text-xs text-white/40">
           © {new Date().getFullYear()} Agendamento
         </p>
       </aside>
 
       {/* Formulário */}
-      <div className="flex min-h-screen flex-col justify-center px-6 py-10 sm:px-10 lg:min-h-0">
+      <div className="flex min-h-dvh flex-col justify-center px-6 py-10 sm:px-10 lg:min-h-0">
         <div className="mx-auto w-full max-w-sm">
           <div className="mb-8 flex items-center justify-between">
             <Link
               href="/"
-              className="text-sm text-muted transition-colors hover:text-foreground"
+              className="inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-foreground"
             >
               ← Início
             </Link>
@@ -91,7 +82,9 @@ export function AuthShell({
             </span>
           </div>
 
-          <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
+            {title}
+          </h1>
           <p className="mt-1 text-sm text-muted">{subtitle}</p>
 
           <div className="mt-6">{children}</div>

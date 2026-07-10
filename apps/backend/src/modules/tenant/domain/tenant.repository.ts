@@ -1,4 +1,4 @@
-import type { EstablishmentType, TenantStatus } from '@repo/shared';
+import type { EstablishmentType, PlanTier, TenantStatus } from '@repo/shared';
 import type { Tenant } from './tenant.entity';
 
 export interface CreateTenantData {
@@ -16,6 +16,9 @@ export interface TenantSettings {
   slug: string;
   establishmentType: EstablishmentType;
   status: TenantStatus;
+  plan: PlanTier;
+  trialEndsAt: Date | null;
+  subscribedAt: Date | null;
   documentId: string | null;
   phone: string | null;
   timezone: string;
@@ -58,6 +61,13 @@ export interface TenantRepository {
     id: string,
     data: UpdateTenantSettingsData,
   ): Promise<TenantSettings | null>;
+  /** Ativa a assinatura (pagamento simulado): status ACTIVE + subscribedAt. */
+  activateSubscription(
+    id: string,
+    plan?: PlanTier,
+  ): Promise<TenantSettings | null>;
+  /** Troca o plano (upgrade/downgrade). */
+  changePlan(id: string, plan: PlanTier): Promise<TenantSettings | null>;
 }
 
 /** Token de injeção do NestJS para a porta acima. */

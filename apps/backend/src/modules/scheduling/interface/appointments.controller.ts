@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -11,11 +12,13 @@ import {
 } from '@nestjs/common';
 import {
   cancelAppointmentSchema,
+  createManualAppointmentSchema,
   rescheduleAppointmentSchema,
   updateAppointmentStatusSchema,
   UserRole,
   type AppointmentResponseDto,
   type CancelAppointmentDto,
+  type CreateManualAppointmentDto,
   type RescheduleAppointmentDto,
   type UpdateAppointmentStatusDto,
 } from '@repo/shared';
@@ -41,6 +44,16 @@ export class AppointmentsController {
   ): Promise<AppointmentResponseDto[]> {
     const day = date ?? new Date().toISOString().slice(0, 10);
     return this.appointments.listByDay(tenantId, day, professionalId);
+  }
+
+  @Post()
+  @HttpCode(201)
+  create(
+    @TenantId() tenantId: string,
+    @Body(new ZodValidationPipe(createManualAppointmentSchema))
+    dto: CreateManualAppointmentDto,
+  ): Promise<AppointmentResponseDto> {
+    return this.appointments.createManual(tenantId, dto);
   }
 
   @Patch(':id/status')

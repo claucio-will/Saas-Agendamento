@@ -69,6 +69,7 @@ export class OnboardTenantUseCase {
           name: input.tenantName,
           slug: input.slug,
           establishmentType: input.establishmentType,
+          plan: input.plan,
           documentId: input.documentId,
           phone: input.phone,
           addressLine: input.address.addressLine,

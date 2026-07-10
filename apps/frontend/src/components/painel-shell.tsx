@@ -11,6 +11,7 @@ import {
   IconScissors,
   IconUser,
   IconUsers,
+  IconWallet,
 } from './icons';
 
 const LINKS: ShellLink[] = [
@@ -18,7 +19,8 @@ const LINKS: ShellLink[] = [
   { href: '/painel/agenda', label: 'Agenda', icon: <IconCalendar /> },
   { href: '/painel/servicos', label: 'Serviços', icon: <IconScissors /> },
   { href: '/painel/profissionais', label: 'Profissionais', icon: <IconUsers /> },
-  { href: '/painel/clientes', label: 'Clientes', icon: <IconUser /> },
+  { href: '/painel/clientes', label: 'Histórico de clientes', icon: <IconUser /> },
+  { href: '/painel/assinatura', label: 'Assinatura', icon: <IconWallet /> },
   { href: '/painel/configuracoes', label: 'Configurações', icon: <IconCog /> },
 ];
 

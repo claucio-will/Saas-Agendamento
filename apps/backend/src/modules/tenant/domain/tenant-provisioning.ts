@@ -1,4 +1,4 @@
-import type { EstablishmentType, UserRole } from '@repo/shared';
+import type { EstablishmentType, PlanTier, UserRole } from '@repo/shared';
 import type { Tenant } from './tenant.entity';
 
 export interface ProvisionTenantData {
@@ -6,6 +6,7 @@ export interface ProvisionTenantData {
     name: string;
     slug: string;
     establishmentType: EstablishmentType;
+    plan: PlanTier;
     documentId: string;
     phone: string;
     addressLine: string;

@@ -10,10 +10,14 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  activateSubscriptionSchema,
+  changePlanSchema,
   createTenantSchema,
   updateMyTenantSchema,
   updateTenantStatusSchema,
   UserRole,
+  type ActivateSubscriptionDto,
+  type ChangePlanDto,
   type CreateTenantDto,
   type MyTenantResponseDto,
   type TenantResponseDto,
@@ -27,6 +31,8 @@ import { RolesGuard } from '../../auth/interface/roles.guard';
 import { TenantId } from '../../auth/interface/tenant-id.decorator';
 import type { Tenant } from '../domain/tenant.entity';
 import type { TenantSettings } from '../domain/tenant.repository';
+import { ActivateSubscriptionUseCase } from '../application/activate-subscription.usecase';
+import { ChangePlanUseCase } from '../application/change-plan.usecase';
 import { CreateTenantUseCase } from '../application/create-tenant.usecase';
 import { GetMyTenantUseCase } from '../application/get-my-tenant.usecase';
 import { GetMyTenantSettingsUseCase } from '../application/get-my-tenant-settings.usecase';
@@ -49,6 +55,8 @@ export class TenantController {
     private readonly getMyTenant: GetMyTenantUseCase,
     private readonly getMyTenantSettings: GetMyTenantSettingsUseCase,
     private readonly updateMyTenant: UpdateMyTenantUseCase,
+    private readonly activateSubscription: ActivateSubscriptionUseCase,
+    private readonly changePlan: ChangePlanUseCase,
   ) {}
 
   /** Estabelecimento do dono logado (para a navegação do painel). */
@@ -74,6 +82,29 @@ export class TenantController {
     @Body(new ZodValidationPipe(updateMyTenantSchema)) dto: UpdateMyTenantDto,
   ): Promise<MyTenantResponseDto> {
     return this.toMySettings(await this.updateMyTenant.execute(tenantId, dto));
+  }
+
+  /** Ativa a assinatura (checkout simulado — sem gateway de pagamento). */
+  @Post('me/subscription/activate')
+  @Roles(UserRole.TENANT_ADMIN)
+  async activate(
+    @TenantId() tenantId: string,
+    @Body(new ZodValidationPipe(activateSubscriptionSchema))
+    dto: ActivateSubscriptionDto,
+  ): Promise<MyTenantResponseDto> {
+    return this.toMySettings(
+      await this.activateSubscription.execute(tenantId, dto.plan),
+    );
+  }
+
+  /** Troca o plano do estabelecimento (upgrade/downgrade). */
+  @Patch('me/plan')
+  @Roles(UserRole.TENANT_ADMIN)
+  async updatePlan(
+    @TenantId() tenantId: string,
+    @Body(new ZodValidationPipe(changePlanSchema)) dto: ChangePlanDto,
+  ): Promise<MyTenantResponseDto> {
+    return this.toMySettings(await this.changePlan.execute(tenantId, dto.plan));
   }
 
   @Post()
@@ -106,6 +137,9 @@ export class TenantController {
       slug: s.slug,
       establishmentType: s.establishmentType,
       status: s.status,
+      plan: s.plan,
+      trialEndsAt: s.trialEndsAt ? s.trialEndsAt.toISOString() : null,
+      subscribedAt: s.subscribedAt ? s.subscribedAt.toISOString() : null,
       documentId: s.documentId,
       phone: s.phone,
       timezone: s.timezone,

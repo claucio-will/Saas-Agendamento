@@ -210,7 +210,7 @@ export default function PublicBookingPage() {
   if (loadError) {
     return (
       <Shell>
-        <Card>
+        <Card className="max-w-lg">
           <CardTitle>{loadError}</CardTitle>
         </Card>
       </Shell>
@@ -232,7 +232,7 @@ export default function PublicBookingPage() {
   if (confirmed) {
     return (
       <Shell title={profile.name}>
-        <Card className="flex flex-col gap-2">
+        <Card className="flex max-w-lg flex-col gap-2">
           <span className="text-3xl">✅</span>
           <CardTitle>Agendamento confirmado!</CardTitle>
           <p className="text-sm text-muted">
@@ -245,7 +245,11 @@ export default function PublicBookingPage() {
             })}
           </p>
           <p className="mt-2 text-xs text-muted">
-            Enviamos os detalhes para {confirmed.customerEmail}.
+            Guardamos os detalhes em{' '}
+            <Link href="/conta" className="text-accent hover:underline">
+              Minha conta
+            </Link>
+            , onde você pode remarcar ou cancelar.
           </p>
           <Button
             variant="outline"
@@ -265,8 +269,11 @@ export default function PublicBookingPage() {
 
   return (
     <Shell title={profile.name}>
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+        {/* Sidebar — sobre o local + equipe (à direita no desktop) */}
+        <aside className="order-1 flex flex-col gap-4 lg:order-2 lg:sticky lg:top-6">
       {/* Informações do estabelecimento */}
-      <section className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-5">
+      <section className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-5 shadow-card">
         <div className="flex flex-wrap items-center gap-3">
           <span className="w-fit rounded-full bg-accent/15 px-2.5 py-0.5 text-xs font-medium text-accent">
             {ESTABLISHMENT_LABEL[profile.establishmentType]}
@@ -301,7 +308,7 @@ export default function PublicBookingPage() {
       {profile.professionals.length > 0 && (
         <section className="flex flex-col gap-3">
           <h2 className="text-sm font-medium text-accent">Nossa equipe</h2>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="flex flex-col gap-3">
             {profile.professionals.map((pro) => (
               <div
                 key={pro.id}
@@ -321,7 +328,10 @@ export default function PublicBookingPage() {
           </div>
         </section>
       )}
+        </aside>
 
+        {/* Coluna principal — fluxo de agendamento */}
+        <div className="order-2 flex flex-col gap-6 lg:order-1">
       {/* Passo 1 — escolher serviço */}
       <section className="flex flex-col gap-3">
         <h2 className="text-sm font-medium text-accent">1. Escolha o serviço</h2>
@@ -550,6 +560,8 @@ export default function PublicBookingPage() {
           ))}
         </div>
       </section>
+        </div>
+      </div>
     </Shell>
   );
 }
@@ -604,7 +616,7 @@ function Shell({
   children: React.ReactNode;
 }) {
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-6 px-4 py-6">
+    <main className="mx-auto flex min-h-dvh max-w-5xl flex-col gap-6 px-4 py-6 sm:px-6">
       <Link
         href="/"
         className="flex w-fit items-center gap-1 text-sm text-muted transition-colors hover:text-foreground"

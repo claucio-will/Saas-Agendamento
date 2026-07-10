@@ -13,15 +13,19 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const base =
-  'inline-flex items-center justify-center gap-2 rounded-[var(--radius-btn)] font-medium transition-colors select-none ' +
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background ' +
-  'disabled:cursor-not-allowed disabled:opacity-60';
+  'inline-flex items-center justify-center gap-2 rounded-[var(--radius-btn)] font-semibold select-none cursor-pointer ' +
+  'transition-[transform,background-color,box-shadow,opacity] duration-200 ease-[var(--ease-fluid)] ' +
+  'active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ' +
+  'disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100';
 
 const variants: Record<Variant, string> = {
-  primary: 'bg-primary text-primary-foreground hover:opacity-90',
-  accent: 'bg-accent text-accent-foreground hover:opacity-90',
-  outline: 'border border-border bg-transparent text-foreground hover:bg-surface',
-  ghost: 'bg-transparent text-foreground hover:bg-surface',
+  primary:
+    'bg-primary text-primary-foreground shadow-glow hover:brightness-110 hover:-translate-y-px',
+  accent:
+    'bg-accent text-accent-foreground shadow-sm hover:brightness-110 hover:-translate-y-px',
+  outline:
+    'border border-border bg-surface/60 text-foreground hover:bg-surface hover:border-ring/50',
+  ghost: 'bg-transparent text-foreground hover:bg-surface-2',
 };
 
 // Touch targets ≥ 44px (h-11) no md/lg para uso mobile. Ver PRD 3.3.
